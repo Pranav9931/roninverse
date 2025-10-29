@@ -70,18 +70,27 @@ export const applyLensToCanvas = async (
     }
     
     const effectiveGroupId = groupId || SNAP_GROUP_ID;
+    console.log('Effective group ID:', effectiveGroupId);
+    console.log('Using API token:', SNAP_API_TOKEN.substring(0, 20) + '...');
+    
+    console.log('Loading lens from repository...');
     const lens = await cameraKit.lensRepository.loadLens(lensId, effectiveGroupId);
     
     if (!lens) {
-      throw new Error(`Lens ${lensId} not found`);
+      console.error('Lens returned null/undefined');
+      throw new Error(`Lens ${lensId} not found in group ${effectiveGroupId}`);
     }
     
+    console.log('Lens loaded successfully, applying to session...');
     await session.applyLens(lens);
     currentLensId = lensId;
     console.log(`Successfully applied lens: ${lensId}`);
     
   } catch (error) {
-    console.error('Failed to apply lens:', error);
+    console.error('Failed to apply lens - Full error:', error);
+    console.error('Error type:', typeof error);
+    console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
     throw error;
   }
 };
