@@ -1,10 +1,12 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useCameraKit } from '@/hooks/useCameraKit';
 import CameraControls from '@/components/CameraControls';
 import LensCarousel, { Lens } from '@/components/LensCarousel';
 import PermissionScreen from '@/components/PermissionScreen';
 import PhotoPreview from '@/components/PhotoPreview';
+import SetupGuide from '@/components/SetupGuide';
 import { Loader2 } from 'lucide-react';
+import { SNAP_API_TOKEN, SNAP_GROUP_ID } from '@/lib/config';
 
 const mockLenses: Lens[] = [
   { id: 'lens_1', name: 'Rainbow', groupId: 'YOUR_GROUP_ID_HERE' },
@@ -20,6 +22,19 @@ export default function CameraView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedLensId, setSelectedLensId] = useState<string | undefined>();
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const [showSetup, setShowSetup] = useState(false);
+
+  useEffect(() => {
+    const needsSetup = 
+      SNAP_API_TOKEN === 'YOUR_SNAP_API_TOKEN_HERE' || 
+      SNAP_GROUP_ID === 'YOUR_GROUP_ID_HERE';
+    
+    const hasSeenSetup = localStorage.getItem('o7-setup-dismissed');
+    
+    if (needsSetup && !hasSeenSetup) {
+      setShowSetup(true);
+    }
+  }, []);
 
   const {
     status,
@@ -49,6 +64,15 @@ export default function CameraView() {
   const handleRetake = () => {
     setCapturedPhoto(null);
   };
+
+  const handleDismissSetup = () => {
+    localStorage.setItem('o7-setup-dismissed', 'true');
+    setShowSetup(false);
+  };
+
+  if (showSetup) {
+    return <SetupGuide onDismiss={handleDismissSetup} />;
+  }
 
   if (status === 'permission_needed') {
     return <PermissionScreen onRequestPermission={requestPermission} error={error} />;
