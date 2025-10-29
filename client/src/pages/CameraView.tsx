@@ -24,11 +24,7 @@ export default function CameraView() {
   const {
     status,
     error,
-    isFrontCamera,
-    isFlashEnabled,
     requestPermission,
-    toggleCamera,
-    toggleFlash,
     applyLens,
     capturePhoto
   } = useCameraKit(containerRef, canvasRef);
@@ -103,7 +99,7 @@ export default function CameraView() {
 
       {status === 'ready' && (
         <>
-          <div className="absolute bottom-32 left-0 right-0 z-30">
+          <div className="absolute bottom-36 left-0 right-0 z-30">
             <LensCarousel
               lenses={mockLenses}
               onLensSelect={handleLensSelect}
@@ -113,10 +109,6 @@ export default function CameraView() {
 
           <CameraControls
             onCapture={handleCapture}
-            onToggleCamera={toggleCamera}
-            onToggleFlash={toggleFlash}
-            isFlashEnabled={isFlashEnabled}
-            isFrontCamera={isFrontCamera}
             disabled={status !== 'ready'}
           />
         </>

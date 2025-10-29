@@ -1,59 +1,55 @@
-import { Zap, ZapOff, SwitchCamera } from 'lucide-react';
+import { User } from 'lucide-react';
 import { Button } from './ui/button';
-import CaptureButton from './CaptureButton';
 
 interface CameraControlsProps {
   onCapture: () => void;
-  onToggleCamera: () => void;
-  onToggleFlash: () => void;
-  isFlashEnabled: boolean;
-  isFrontCamera: boolean;
   disabled?: boolean;
 }
 
 export default function CameraControls({
   onCapture,
-  onToggleCamera,
-  onToggleFlash,
-  isFlashEnabled,
-  isFrontCamera,
   disabled = false
 }: CameraControlsProps) {
+  const handleCapture = () => {
+    if (!disabled) {
+      if ('vibrate' in navigator) {
+        navigator.vibrate(50);
+      }
+      onCapture();
+    }
+  };
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40">
-      <div className="bg-background/80 backdrop-blur-lg border-t border-border/50 rounded-t-3xl px-6 py-6 pb-8">
-        <div className="flex items-center justify-between max-w-md mx-auto">
-          <Button
-            data-testid="button-flash-toggle"
-            size="icon"
-            variant="ghost"
-            onClick={onToggleFlash}
-            disabled={disabled || isFrontCamera}
-            className="w-12 h-12 rounded-full"
-            aria-label={isFlashEnabled ? 'Disable flash' : 'Enable flash'}
-          >
-            {isFlashEnabled ? (
-              <Zap className="w-5 h-5" />
-            ) : (
-              <ZapOff className="w-5 h-5" />
-            )}
-          </Button>
+    <div className="fixed bottom-8 left-0 right-0 z-40 flex justify-center">
+      <Button
+        data-testid="button-user-profile"
+        size="icon"
+        variant="ghost"
+        className="absolute left-6 w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm text-white hover:bg-white/20"
+        aria-label="User profile"
+      >
+        <User className="w-5 h-5" />
+      </Button>
 
-          <CaptureButton onCapture={onCapture} disabled={disabled} />
+      <button
+        data-testid="button-capture"
+        onClick={handleCapture}
+        disabled={disabled}
+        className="w-20 h-20 rounded-full bg-white/90 backdrop-blur-sm transition-transform active:scale-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+        aria-label="Capture photo"
+      >
+        <div className="w-16 h-16 rounded-full bg-white" />
+      </button>
 
-          <Button
-            data-testid="button-camera-toggle"
-            size="icon"
-            variant="ghost"
-            onClick={onToggleCamera}
-            disabled={disabled}
-            className="w-12 h-12 rounded-full"
-            aria-label="Switch camera"
-          >
-            <SwitchCamera className="w-5 h-5" />
-          </Button>
-        </div>
-      </div>
+      <Button
+        data-testid="button-help"
+        size="icon"
+        variant="ghost"
+        className="absolute right-6 w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm text-white hover:bg-white/20"
+        aria-label="Help"
+      >
+        <span className="text-xl">?</span>
+      </Button>
     </div>
   );
 }
