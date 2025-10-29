@@ -105,7 +105,7 @@ export default function CameraView() {
 
       {status === 'ready' && (
         <>
-          <div className="absolute bottom-30 left-0 right-0 z-30">
+          <div className="absolute bottom-24 left-0 right-0 z-30">
             <LensCarousel
               lenses={mockLenses}
               onLensSelect={handleLensSelect}
