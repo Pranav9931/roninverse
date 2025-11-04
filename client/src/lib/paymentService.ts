@@ -1,4 +1,28 @@
+import { Chain } from 'viem';
+
 const API_BASE_URL = 'https://fluentx402.replit.app';
+
+export const FLUENT_TESTNET: Chain = {
+  id: 20994,
+  name: 'Fluent Testnet',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Fluent',
+    symbol: 'FLUID',
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://rpc.dev.thefluent.xyz/'],
+    },
+    public: {
+      http: ['https://rpc.dev.thefluent.xyz/'],
+    },
+  },
+  blockExplorers: {
+    default: { name: 'Fluent Explorer', url: 'https://blockscout.dev.thefluent.xyz/' },
+  },
+  testnet: true,
+};
 
 export const PAYMENT_CONFIG = {
   networkId: '20994',

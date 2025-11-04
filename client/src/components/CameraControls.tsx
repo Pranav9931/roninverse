@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { User, Copy, Check, Wallet } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { User, Copy, Check, Wallet, RefreshCw } from 'lucide-react';
 import { usePrivy } from '@privy-io/react-auth';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { createPublicClient, http, formatUnits } from 'viem';
+import { FLUENT_TESTNET } from '@/lib/paymentService';
 
 interface CameraControlsProps {
   onCapture: () => void;
@@ -17,6 +19,8 @@ export default function CameraControls({
   const [showWalletDialog, setShowWalletDialog] = useState(false);
   const [copied, setCopied] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [balance, setBalance] = useState<string | null>(null);
+  const [loadingBalance, setLoadingBalance] = useState(false);
   const { user, createWallet } = usePrivy();
   const { toast } = useToast();
 
@@ -61,6 +65,48 @@ export default function CameraControls({
       setCreating(false);
     }
   };
+
+  const fetchBalance = async () => {
+    const walletAddress = user?.wallet?.address;
+    if (!walletAddress) return;
+
+    setLoadingBalance(true);
+    try {
+      const publicClient = createPublicClient({
+        chain: FLUENT_TESTNET,
+        transport: http(),
+      });
+
+      const balance = await publicClient.readContract({
+        address: '0xd8ac240b2a5ec5b866d9e2f5e1d42e2fcb753d0',
+        abi: [
+          {
+            constant: true,
+            inputs: [{ name: '_owner', type: 'address' }],
+            name: 'balanceOf',
+            outputs: [{ name: 'balance', type: 'uint256' }],
+            type: 'function',
+          },
+        ],
+        functionName: 'balanceOf',
+        args: [walletAddress as `0x${string}`],
+      });
+
+      const formattedBalance = formatUnits(balance as bigint, 18);
+      setBalance(formattedBalance);
+    } catch (error) {
+      console.error('Failed to fetch balance:', error);
+      setBalance('Error');
+    } finally {
+      setLoadingBalance(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showWalletDialog && user?.wallet?.address) {
+      fetchBalance();
+    }
+  }, [showWalletDialog, user?.wallet?.address]);
 
   return (
     <>
@@ -127,31 +173,63 @@ export default function CameraControls({
                 </Button>
               </div>
             ) : (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">
-                  Wallet Address
-                </label>
-                <div className="mt-2 flex items-center gap-2">
-                  <code 
-                    data-testid="text-wallet-address"
-                    className="flex-1 p-3 bg-muted rounded-md text-sm font-mono break-all"
-                  >
-                    {user.wallet.address}
-                  </code>
-                  <Button
-                    data-testid="button-copy-address"
-                    size="icon"
-                    variant="outline"
-                    onClick={handleCopyAddress}
-                  >
-                    {copied ? (
-                      <Check className="w-4 h-4 text-green-500" />
+              <>
+                <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium">
+                      FLUID Balance
+                    </label>
+                    <Button
+                      data-testid="button-refresh-balance"
+                      size="icon"
+                      variant="ghost"
+                      onClick={fetchBalance}
+                      disabled={loadingBalance}
+                      className="h-6 w-6"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${loadingBalance ? 'animate-spin' : ''}`} />
+                    </Button>
+                  </div>
+                  <div className="text-2xl font-bold" data-testid="text-fluid-balance">
+                    {loadingBalance ? (
+                      <span className="text-muted-foreground">Loading...</span>
+                    ) : balance !== null ? (
+                      <span>{parseFloat(balance).toFixed(2)} FLUID</span>
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <span className="text-muted-foreground">--</span>
                     )}
-                  </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Each lens costs 1 FLUID token
+                  </p>
                 </div>
-              </div>
+
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Wallet Address
+                  </label>
+                  <div className="mt-2 flex items-center gap-2">
+                    <code 
+                      data-testid="text-wallet-address"
+                      className="flex-1 p-3 bg-muted rounded-md text-sm font-mono break-all"
+                    >
+                      {user.wallet.address}
+                    </code>
+                    <Button
+                      data-testid="button-copy-address"
+                      size="icon"
+                      variant="outline"
+                      onClick={handleCopyAddress}
+                    >
+                      {copied ? (
+                        <Check className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
 
             <div className="space-y-2 text-sm">
