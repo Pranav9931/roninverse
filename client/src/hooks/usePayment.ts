@@ -1,18 +1,10 @@
 import { useState } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
-import { 
-  encodeFunctionData, 
-  serializeTransaction, 
-  parseTransaction,
-  createWalletClient,
-  custom,
-  type Hex
-} from 'viem';
+import { encodeFunctionData } from 'viem';
 import {
   verifyPayment,
   settlePayment,
   PAYMENT_CONFIG,
-  FLUENT_TESTNET,
   type PaymentDetails,
   type VerifyResponse,
   type SettleResponse,
@@ -121,34 +113,32 @@ export function usePayment() {
       console.log('Creating transaction for signing (no gas required from user)...');
       
       const provider = await activeWallet.getEthereumProvider();
-      
-      const walletClient = createWalletClient({
-        account: walletAddress as `0x${string}`,
-        chain: FLUENT_TESTNET,
-        transport: custom(provider),
-      });
 
-      const nonce = await provider.request({
+      const nonceHex = await provider.request({
         method: 'eth_getTransactionCount',
         params: [walletAddress, 'latest'],
-      }) as number;
+      }) as string;
+      
+      const nonce = parseInt(nonceHex, 16);
 
       const transaction = {
-        to: PAYMENT_CONFIG.fluidTokenAddress as `0x${string}`,
-        data: data as Hex,
-        value: BigInt(0),
-        nonce: typeof nonce === 'number' ? nonce : parseInt(nonce, 16),
-        chainId: PAYMENT_CONFIG.chainId,
-        gas: BigInt(100000),
-        maxFeePerGas: BigInt(1000000000),
-        maxPriorityFeePerGas: BigInt(1000000000),
+        to: PAYMENT_CONFIG.fluidTokenAddress,
+        data,
+        value: '0x0',
+        nonce: `0x${nonce.toString(16)}`,
+        chainId: `0x${PAYMENT_CONFIG.chainId.toString(16)}`,
+        gas: '0x186a0',
+        gasPrice: '0x3b9aca00',
       };
 
       console.log('Requesting user signature (facilitator will pay gas)...');
       
-      const signature = await walletClient.signTransaction(transaction);
+      const signature = await provider.request({
+        method: 'eth_signTransaction',
+        params: [transaction],
+      }) as string;
       
-      console.log('Transaction signed successfully');
+      console.log('Transaction signed successfully:', signature);
 
       const paymentDetails: PaymentDetails = {
         networkId: PAYMENT_CONFIG.networkId,
