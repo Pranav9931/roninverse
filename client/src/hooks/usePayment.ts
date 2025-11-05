@@ -114,30 +114,18 @@ export function usePayment() {
 
       let txHash: string;
 
-      if (activeWallet.walletClientType === 'privy') {
-        const txRequest = {
-          to: PAYMENT_CONFIG.fluidTokenAddress as `0x${string}`,
+      const provider = await activeWallet.getEthereumProvider();
+      
+      const txResponse = await provider.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: walletAddress,
+          to: PAYMENT_CONFIG.fluidTokenAddress,
           data,
-        };
-        
-        console.log('Transaction request:', txRequest);
-        const txResponse = await sendTransaction(txRequest);
-        txHash = typeof txResponse === 'string' ? txResponse : txResponse.hash;
-      } else {
-        const provider = await activeWallet.getEthereumProvider();
-        
-        const txResponse = await provider.request({
-          method: 'eth_sendTransaction',
-          params: [{
-            from: walletAddress,
-            to: PAYMENT_CONFIG.fluidTokenAddress,
-            data,
-          }],
-        }) as string;
-        
-        txHash = txResponse;
-      }
-
+        }],
+      }) as string;
+      
+      txHash = txResponse;
       console.log('Transaction hash:', txHash);
 
       const paymentDetails: PaymentDetails = {
