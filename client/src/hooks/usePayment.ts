@@ -1,10 +1,18 @@
 import { useState } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
-import { encodeFunctionData, serializeTransaction, parseTransaction } from 'viem';
+import { 
+  encodeFunctionData, 
+  serializeTransaction, 
+  parseTransaction,
+  createWalletClient,
+  custom,
+  type Hex
+} from 'viem';
 import {
   verifyPayment,
   settlePayment,
   PAYMENT_CONFIG,
+  FLUENT_TESTNET,
   type PaymentDetails,
   type VerifyResponse,
   type SettleResponse,
@@ -110,24 +118,35 @@ export function usePayment() {
         ],
       });
 
-      console.log('Creating transaction for signing...');
+      console.log('Creating transaction for signing (no gas required from user)...');
       
       const provider = await activeWallet.getEthereumProvider();
       
-      const txParams = {
-        from: walletAddress,
-        to: PAYMENT_CONFIG.fluidTokenAddress,
-        data,
-        value: '0x0',
-        gas: '0x0',
+      const walletClient = createWalletClient({
+        account: walletAddress as `0x${string}`,
+        chain: FLUENT_TESTNET,
+        transport: custom(provider),
+      });
+
+      const nonce = await provider.request({
+        method: 'eth_getTransactionCount',
+        params: [walletAddress, 'latest'],
+      }) as number;
+
+      const transaction = {
+        to: PAYMENT_CONFIG.fluidTokenAddress as `0x${string}`,
+        data: data as Hex,
+        value: BigInt(0),
+        nonce: typeof nonce === 'number' ? nonce : parseInt(nonce, 16),
+        chainId: PAYMENT_CONFIG.chainId,
+        gas: BigInt(100000),
+        maxFeePerGas: BigInt(1000000000),
+        maxPriorityFeePerGas: BigInt(1000000000),
       };
 
-      console.log('Requesting user to sign transaction (no gas required)...');
+      console.log('Requesting user signature (facilitator will pay gas)...');
       
-      const signedTx = await provider.request({
-        method: 'eth_signTransaction',
-        params: [txParams],
-      }) as string;
+      const signature = await walletClient.signTransaction(transaction);
       
       console.log('Transaction signed successfully');
 
@@ -141,18 +160,18 @@ export function usePayment() {
       };
 
       console.log('Verifying payment with x402 facilitator...');
-      const verifyRes = await verifyPayment(signedTx, paymentDetails);
+      const verifyRes = await verifyPayment(signature, paymentDetails);
       setVerifyResult(verifyRes);
       console.log('Payment verified:', verifyRes);
 
-      console.log('Settling payment (facilitator pays gas)...');
+      console.log('Settling payment (facilitator broadcasts and pays gas)...');
       const settleRes = await settlePayment(
-        signedTx,
+        signature,
         paymentDetails,
         verifyRes.transactionId
       );
       setSettleResult(settleRes);
-      console.log('Payment settled:', settleRes);
+      console.log('Payment settled by facilitator:', settleRes);
 
       return {
         success: true,
