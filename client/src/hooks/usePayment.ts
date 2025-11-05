@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
-import { encodeFunctionData } from 'viem';
+import { encodeFunctionData, serializeTransaction, parseTransaction } from 'viem';
 import {
   verifyPayment,
   settlePayment,
@@ -110,23 +110,26 @@ export function usePayment() {
         ],
       });
 
-      console.log('Sending transaction from wallet:', activeWallet.walletClientType);
-
-      let txHash: string;
-
+      console.log('Creating transaction for signing...');
+      
       const provider = await activeWallet.getEthereumProvider();
       
-      const txResponse = await provider.request({
-        method: 'eth_sendTransaction',
-        params: [{
-          from: walletAddress,
-          to: PAYMENT_CONFIG.fluidTokenAddress,
-          data,
-        }],
+      const txParams = {
+        from: walletAddress,
+        to: PAYMENT_CONFIG.fluidTokenAddress,
+        data,
+        value: '0x0',
+        gas: '0x0',
+      };
+
+      console.log('Requesting user to sign transaction (no gas required)...');
+      
+      const signedTx = await provider.request({
+        method: 'eth_signTransaction',
+        params: [txParams],
       }) as string;
       
-      txHash = txResponse;
-      console.log('Transaction hash:', txHash);
+      console.log('Transaction signed successfully');
 
       const paymentDetails: PaymentDetails = {
         networkId: PAYMENT_CONFIG.networkId,
@@ -137,14 +140,14 @@ export function usePayment() {
         tokenAddress: PAYMENT_CONFIG.fluidTokenAddress,
       };
 
-      console.log('Verifying payment...');
-      const verifyRes = await verifyPayment(txHash, paymentDetails);
+      console.log('Verifying payment with x402 facilitator...');
+      const verifyRes = await verifyPayment(signedTx, paymentDetails);
       setVerifyResult(verifyRes);
       console.log('Payment verified:', verifyRes);
 
-      console.log('Settling payment...');
+      console.log('Settling payment (facilitator pays gas)...');
       const settleRes = await settlePayment(
-        txHash,
+        signedTx,
         paymentDetails,
         verifyRes.transactionId
       );
