@@ -70,23 +70,48 @@ export default function CameraControls({
 
     setLoadingBalance(true);
     try {
-      const response = await fetch('/api/wallet/balance', {
+      const tokenAddress = '0xd8acBC0d60acCCeeF70D9b84ac47153b3895D3d0';
+      const rpcUrl = 'https://rpc.dev.thefluent.xyz/';
+      
+      const callData = `0x70a08231${walletAddress.slice(2).padStart(64, '0')}`;
+      
+      const response = await fetch(rpcUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ walletAddress }),
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'eth_call',
+          params: [
+            {
+              to: tokenAddress,
+              data: callData,
+            },
+            'latest'
+          ],
+          id: 1,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch balance');
+        throw new Error(`RPC request failed: ${response.statusText}`);
       }
 
       const data = await response.json();
-      setBalance(data.balance);
+      
+      if (data.error) {
+        throw new Error(data.error.message || 'RPC error');
+      }
+
+      const balanceHex = data.result;
+      const balanceWei = BigInt(balanceHex);
+      const balanceEther = Number(balanceWei) / 1e18;
+
+      setBalance(balanceEther.toString());
     } catch (error) {
       console.error('Failed to fetch balance:', error);
-      setBalance('Error');
+      setBalance('0');
     } finally {
       setLoadingBalance(false);
     }
@@ -183,16 +208,17 @@ export default function CameraControls({
                   <div className="text-2xl font-bold" data-testid="text-fluid-balance">
                     {loadingBalance ? (
                       <span className="text-muted-foreground">Loading...</span>
-                    ) : balance !== null && balance !== 'Error' && !isNaN(parseFloat(balance)) ? (
+                    ) : balance !== null && !isNaN(parseFloat(balance)) ? (
                       <span>{parseFloat(balance).toFixed(2)} FLUID</span>
-                    ) : balance === 'Error' || (balance !== null && isNaN(parseFloat(balance))) ? (
-                      <span className="text-destructive">Error loading balance</span>
                     ) : (
                       <span className="text-muted-foreground">--</span>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Each lens costs 1 FLUID token
+                    {balance === '0' && !loadingBalance && (
+                      <span className="block mt-1 text-amber-500">⚠️ Unable to verify balance. Visit block explorer to check.</span>
+                    )}
                   </p>
                 </div>
 
