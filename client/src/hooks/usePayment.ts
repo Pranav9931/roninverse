@@ -124,11 +124,17 @@ export function usePayment() {
         'function transfer(address to, uint256 amount) returns (bool)'
       ]);
 
+      // Convert amount to BigInt for proper encoding
+      const amountBigInt = BigInt(PAYMENT_CONFIG.lensPaymentAmount);
+      console.log('Transfer amount (wei):', PAYMENT_CONFIG.lensPaymentAmount);
+      console.log('Transfer amount (BigInt):', amountBigInt.toString());
+
       // Encode the transfer function call
       const data = erc20Interface.encodeFunctionData('transfer', [
         PAYMENT_CONFIG.recipientAddress,
-        PAYMENT_CONFIG.lensPaymentAmount,
+        amountBigInt,
       ]);
+      console.log('Encoded transfer data:', data);
 
       // Create the complete transaction object with all required parameters
       // Note: User sees gas estimate in wallet, but x402 facilitator pays the actual gas
@@ -171,6 +177,7 @@ export function usePayment() {
         tokenAddress: PAYMENT_CONFIG.fluidTokenAddress,
       };
 
+      console.log('Payment details to send to x402:', JSON.stringify(paymentDetails, null, 2));
       console.log('Verifying payment with x402 facilitator...');
       const verifyRes = await verifyPayment(signedTransaction, paymentDetails);
       setVerifyResult(verifyRes);

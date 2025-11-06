@@ -88,15 +88,19 @@ export async function verifyPayment(
   paymentPayload: string,
   paymentDetails: PaymentDetails
 ): Promise<VerifyResponse> {
+  const requestBody = {
+    paymentPayload,
+    paymentDetails,
+  };
+  
+  console.log('x402 verify request body:', JSON.stringify(requestBody, null, 2));
+  
   const response = await fetch(`${API_BASE_URL}/api/verify`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      paymentPayload,
-      paymentDetails,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
