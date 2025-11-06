@@ -34,7 +34,7 @@ export const PAYMENT_CONFIG = {
   scheme: 'evm-erc20-gasless' as const,
   // EIP-712 domain parameters for FLUID token
   eip712Domain: {
-    name: 'FLUID Token',
+    name: 'Fluent USD',
     version: '1',
     chainId: 20994,
     verifyingContract: '0xd8acBC0d60acCCeeF70D9b84ac47153b3895D3d0',
