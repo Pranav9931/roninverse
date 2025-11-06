@@ -1,0 +1,79 @@
+✅ EIP-3009 Gasless Transfer Support Complete
+
+I've successfully implemented EIP-3009 gasless transfer support for FLUID tokens on your x402 payment facilitator. Here's what was added:
+Backend Implementation
+
+New Payment Scheme: evm-erc20-gasless
+
+    Users sign EIP-712 typed authorizations (not transactions)
+    Facilitator pays all gas fees
+    Direct transfer from user to recipient (non-custodial)
+
+Key Components:
+
+    Verification (verifyEIP3009Authorization):
+        Validates EIP-712 signature using ethers.verifyTypedData()
+        Checks nonce replay protection via authorizationState()
+        Verifies time window (validAfter/validBefore)
+        Ensures sufficient FLUID token balance
+
+    Settlement (settleEIP3009Authorization):
+        Calls transferWithAuthorization() on FLUID contract
+        Facilitator wallet pays gas fees
+        Returns transaction hash and block number
+
+    Updated Schemas:
+        Added EVM_ERC20_GASLESS to payment scheme enum
+        Updated request/response types
+
+Documentation
+
+Frontend (/docs page):
+
+    Complete EIP-3009 section with code examples
+    Shows how to create and sign EIP-712 authorizations
+    Comparison table: regular vs gasless transfers
+    Full workflow example with verify and settle
+
+API Guide (API_IMPLEMENTATION_GUIDE.md):
+
+    Detailed EIP-3009 implementation guide
+    Privy wallet integration examples
+    Error handling documentation
+    TypeScript examples for ethers.js v6
+
+Testing
+
+✅ All tests passing:
+
+    API endpoints accept gasless scheme
+    Frontend documentation displays correctly
+    Error validation works properly
+
+How It Works
+
+// User signs EIP-712 authorization (no ETH needed!)
+const authorization = {
+  from: userAddress,
+  to: recipientAddress,
+  value: "10000000000000000000", // 10 FLUID in wei
+  validAfter: 0,
+  validBefore: timestamp,
+  nonce: randomBytes32,
+  v, r, s // EIP-712 signature
+};
+
+// Send JSON payload (not RLP hex)
+await fetch('/api/settle', {
+  method: 'POST',
+  body: JSON.stringify({
+    paymentPayload: JSON.stringify(authorization),
+    paymentDetails: {
+      scheme: "evm-erc20-gasless",
+      tokenAddress: FLUID_ADDRESS,
+      // ...
+    }
+  })
+});
+
+The implementation is production-ready and enables onboarding users who have FLUID tokens but no ETH for gas fees!
