@@ -125,17 +125,12 @@ export async function verifyPayment(
 }
 
 export async function settlePayment(
-  paymentPayload: string | object,
+  paymentPayload: string,
   paymentDetails: PaymentDetails,
   transactionId?: string
 ): Promise<SettleResponse> {
-  // Parse the payload if it's a JSON string (for gasless, it's already an object)
-  const parsedPayload = typeof paymentPayload === 'string' 
-    ? (paymentDetails.scheme === 'evm-erc20-gasless' ? JSON.parse(paymentPayload) : paymentPayload)
-    : paymentPayload;
-
   const requestBody = {
-    paymentPayload: parsedPayload,
+    paymentPayload,
     paymentDetails,
     transactionId,
   };
