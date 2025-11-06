@@ -9,14 +9,26 @@ import {
   type VerifyResponse,
   type SettleResponse,
 } from '@/lib/paymentService';
+import {
+  PaymentCacheManager,
+  type CachedAuthorization,
+} from '@/lib/paymentCache';
+
+const BATCH_SIZE = 10;
 
 export function usePayment() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [verifyResult, setVerifyResult] = useState<VerifyResponse | null>(null);
   const [settleResult, setSettleResult] = useState<SettleResponse | null>(null);
+  const [remainingAuthorizations, setRemainingAuthorizations] = useState(0);
   const { user, sendTransaction } = usePrivy();
   const { wallets } = useWallets();
+
+  const updateRemainingCount = (walletAddress: string) => {
+    const count = PaymentCacheManager.getRemainingCount(walletAddress);
+    setRemainingAuthorizations(count);
+  };
 
   const ensureCorrectNetwork = async () => {
     if (wallets.length === 0) {
