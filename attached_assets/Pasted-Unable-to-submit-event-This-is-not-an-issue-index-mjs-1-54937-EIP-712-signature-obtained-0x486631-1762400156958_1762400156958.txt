@@ -1,0 +1,37 @@
+Unable to submit event. This is not an issue. index.mjs:1:54937
+EIP-712 signature obtained: 0x48663159cc90efbc70ef5f9311eb9e65b2e9a720e3753293e33c2a9a17d5045d3cb306fe165f5f0c0fbe5841eb0141d2ab39d84bc660e5bb39361aca3c75a6a31c usePayment.ts:161:17
+Raw signature: 0x48663159cc90efbc70ef5f9311eb9e65b2e9a720e3753293e33c2a9a17d5045d3cb306fe165f5f0c0fbe5841eb0141d2ab39d84bc660e5bb39361aca3c75a6a31c usePayment.ts:173:15
+Parsed signature - v: 28 r: 0x48663159cc90efbc70ef5f9311eb9e65b2e9a720e3753293e33c2a9a17d5045d s: 0x3cb306fe165f5f0c0fbe5841eb0141d2ab39d84bc660e5bb39361aca3c75a6a3 usePayment.ts:174:15
+Authorization object: {
+  "from": "0x17411acF182200fFE1c040A7593cCF68BE75C765",
+  "to": "0xb448e18d272291503fb8f3150247e2b4bc817729",
+  "value": "10000000000000000",
+  "validAfter": "0",
+  "validBefore": "1762403728",
+  "nonce": "0x718e048821e2d145b7d08efcb0245172138e253169ca17808b9809175fa555ec",
+  "v": 28,
+  "r": "0x48663159cc90efbc70ef5f9311eb9e65b2e9a720e3753293e33c2a9a17d5045d",
+  "s": "0x3cb306fe165f5f0c0fbe5841eb0141d2ab39d84bc660e5bb39361aca3c75a6a3"
+} usePayment.ts:188:15
+Authorization JSON string: {"from":"0x17411acF182200fFE1c040A7593cCF68BE75C765","to":"0xb448e18d272291503fb8f3150247e2b4bc817729","value":"10000000000000000","validAfter":"0","validBefore":"1762403728","nonce":"0x718e048821e2d145b7d08efcb0245172138e253169ca17808b9809175fa555ec","v":28,"r":"0x48663159cc90efbc70ef5f9311eb9e65b2e9a720e3753293e33c2a9a17d5045d","s":"0x3cb306fe165f5f0c0fbe5841eb0141d2ab39d84bc660e5bb39361aca3c75a6a3"} usePayment.ts:189:15
+Payment details to send to x402: {
+  "networkId": "20994",
+  "amount": "10000000000000000",
+  "to": "0xb448e18d272291503fb8f3150247e2b4bc817729",
+  "from": "0x17411acF182200fFE1c040A7593cCF68BE75C765",
+  "scheme": "evm-erc20-gasless",
+  "tokenAddress": "0xd8acBC0d60acCCeeF70D9b84ac47153b3895D3d0"
+} usePayment.ts:200:15
+Settling gasless payment (facilitator broadcasts and pays all gas)... usePayment.ts:203:15
+x402 settle request body: {
+  "paymentPayload": "{\"from\":\"0x17411acF182200fFE1c040A7593cCF68BE75C765\",\"to\":\"0xb448e18d272291503fb8f3150247e2b4bc817729\",\"value\":\"10000000000000000\",\"validAfter\":\"0\",\"validBefore\":\"1762403728\",\"nonce\":\"0x718e048821e2d145b7d08efcb0245172138e253169ca17808b9809175fa555ec\",\"v\":28,\"r\":\"0x48663159cc90efbc70ef5f9311eb9e65b2e9a720e3753293e33c2a9a17d5045d\",\"s\":\"0x3cb306fe165f5f0c0fbe5841eb0141d2ab39d84bc660e5bb39361aca3c75a6a3\"}",
+  "paymentDetails": {
+    "networkId": "20994",
+    "amount": "10000000000000000",
+    "to": "0xb448e18d272291503fb8f3150247e2b4bc817729",
+    "from": "0x17411acF182200fFE1c040A7593cCF68BE75C765",
+    "scheme": "evm-erc20-gasless",
+    "tokenAddress": "0xd8acBC0d60acCCeeF70D9b84ac47153b3895D3d0"
+  }
+} paymentService.ts:138:11
+Payment error: Error: Verification failed: Invalid signature. Recovered 0xDE2EC5055143AB6079534dB0d5967629191a324F, expected 0x17411acF182200fFE1c040A7593cCF68BE75C765
