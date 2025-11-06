@@ -92,7 +92,9 @@ export function usePayment() {
     setSettleResult(null);
 
     try {
+      console.log('Starting payment process...');
       await ensureCorrectNetwork();
+      console.log('Network check complete');
 
       if (wallets.length === 0) {
         throw new Error('No wallet connected. Please connect a wallet first.');
@@ -105,13 +107,17 @@ export function usePayment() {
 
       // Get the ethereum provider from the wallet
       const ethereumProvider = await activeWallet.getEthereumProvider();
+      console.log('Got ethereum provider');
       
       // Create an ethers provider and signer from Privy wallet
       const provider = new ethers.BrowserProvider(ethereumProvider);
       const signer = await provider.getSigner();
+      console.log('Created provider and signer');
 
       // Get transaction count (nonce)
+      console.log('Fetching nonce...');
       const nonce = await provider.getTransactionCount(walletAddress);
+      console.log('Got nonce:', nonce);
 
       // Create ERC20 contract interface for encoding the transfer
       const erc20Interface = new ethers.Interface([
