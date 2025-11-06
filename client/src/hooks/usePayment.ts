@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
-import { encodeFunctionData } from 'viem';
+import { 
+  encodeFunctionData, 
+  createWalletClient, 
+  custom,
+  serializeTransaction,
+  parseTransaction,
+  type TransactionSerializable
+} from 'viem';
+import { FLUENT_TESTNET } from '@/lib/paymentService';
 import {
   verifyPayment,
   settlePayment,
@@ -101,6 +109,27 @@ export function usePayment() {
       const activeWallet = wallets[0];
       const walletAddress = activeWallet.address;
 
+      console.log('Creating transaction for signing (no gas required from user)...');
+
+      // Get the ethereum provider from the wallet
+      const provider = await activeWallet.getEthereumProvider();
+
+      // Create a wallet client using viem
+      const walletClient = createWalletClient({
+        account: walletAddress as `0x${string}`,
+        chain: FLUENT_TESTNET,
+        transport: custom(provider),
+      });
+
+      // Get the current nonce
+      const nonceHex = await provider.request({
+        method: 'eth_getTransactionCount',
+        params: [walletAddress, 'latest'],
+      }) as string;
+      
+      const nonce = parseInt(nonceHex, 16);
+
+      // Encode the ERC20 transfer function call
       const data = encodeFunctionData({
         abi: ERC20_ABI,
         functionName: 'transfer',
@@ -110,35 +139,31 @@ export function usePayment() {
         ],
       });
 
-      console.log('Creating transaction for signing (no gas required from user)...');
-      
-      const provider = await activeWallet.getEthereumProvider();
-
-      const nonceHex = await provider.request({
-        method: 'eth_getTransactionCount',
-        params: [walletAddress, 'latest'],
-      }) as string;
-      
-      const nonce = parseInt(nonceHex, 16);
-
-      const transaction = {
-        to: PAYMENT_CONFIG.fluidTokenAddress,
+      // Create the transaction object
+      const transaction: TransactionSerializable = {
+        to: PAYMENT_CONFIG.fluidTokenAddress as `0x${string}`,
         data,
-        value: '0x0',
-        nonce: `0x${nonce.toString(16)}`,
-        chainId: `0x${PAYMENT_CONFIG.chainId.toString(16)}`,
-        gas: '0x186a0',
-        gasPrice: '0x3b9aca00',
+        value: BigInt(0),
+        nonce,
+        chainId: PAYMENT_CONFIG.chainId,
+        gas: BigInt(100000),
+        gasPrice: BigInt(1000000000), // 1 gwei
       };
 
       console.log('Requesting user signature (facilitator will pay gas)...');
       
-      const signature = await provider.request({
-        method: 'eth_signTransaction',
-        params: [transaction],
-      }) as string;
-      
-      console.log('Transaction signed successfully:', signature);
+      // Sign the transaction using viem's signTransaction
+      let signedTransaction: string;
+      try {
+        signedTransaction = await walletClient.signTransaction(transaction);
+        console.log('Transaction signed successfully');
+      } catch (signError: any) {
+        console.error('Signing error:', signError);
+        throw new Error(
+          signError?.message || 
+          'Failed to sign transaction. Please ensure your wallet supports transaction signing.'
+        );
+      }
 
       const paymentDetails: PaymentDetails = {
         networkId: PAYMENT_CONFIG.networkId,
@@ -150,13 +175,13 @@ export function usePayment() {
       };
 
       console.log('Verifying payment with x402 facilitator...');
-      const verifyRes = await verifyPayment(signature, paymentDetails);
+      const verifyRes = await verifyPayment(signedTransaction, paymentDetails);
       setVerifyResult(verifyRes);
       console.log('Payment verified:', verifyRes);
 
       console.log('Settling payment (facilitator broadcasts and pays gas)...');
       const settleRes = await settlePayment(
-        signature,
+        signedTransaction,
         paymentDetails,
         verifyRes.transactionId
       );
@@ -170,9 +195,18 @@ export function usePayment() {
       };
     } catch (err: any) {
       console.error('Payment error:', err);
-      const errorMessage = err.message || 'Payment failed';
+      // Handle errors more gracefully
+      let errorMessage = 'Payment failed';
+      if (err?.message) {
+        errorMessage = err.message;
+      } else if (err?.reason) {
+        errorMessage = err.reason;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      
       setError(errorMessage);
-      throw err;
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
