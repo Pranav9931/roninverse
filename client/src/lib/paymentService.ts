@@ -31,7 +31,14 @@ export const PAYMENT_CONFIG = {
   fluidTokenAddress: '0xd8acBC0d60acCCeeF70D9b84ac47153b3895D3d0',
   rpcUrl: 'https://rpc.testnet.fluent.xyz/',
   lensPaymentAmount: '10000000000000000', // 0.01 FLUID token in wei
-  scheme: 'evm-erc20' as const,
+  scheme: 'evm-erc20-gasless' as const,
+  // EIP-712 domain parameters for FLUID token
+  eip712Domain: {
+    name: 'FLUID Token',
+    version: '1',
+    chainId: 20994,
+    verifyingContract: '0xd8acBC0d60acCCeeF70D9b84ac47153b3895D3d0',
+  },
 };
 
 export interface PaymentDetails {
@@ -39,7 +46,7 @@ export interface PaymentDetails {
   amount: string;
   to: string;
   from?: string;
-  scheme: 'evm-native' | 'evm-erc20';
+  scheme: 'evm-native' | 'evm-erc20' | 'evm-erc20-gasless';
   tokenAddress?: string;
 }
 

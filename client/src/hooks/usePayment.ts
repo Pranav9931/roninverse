@@ -10,19 +10,6 @@ import {
   type SettleResponse,
 } from '@/lib/paymentService';
 
-const ERC20_ABI = [
-  {
-    name: 'transfer',
-    type: 'function',
-    stateMutability: 'nonpayable',
-    inputs: [
-      { name: 'to', type: 'address' },
-      { name: 'amount', type: 'uint256' },
-    ],
-    outputs: [{ type: 'bool' }],
-  },
-] as const;
-
 export function usePayment() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -103,70 +90,98 @@ export function usePayment() {
       const activeWallet = wallets[0];
       const walletAddress = activeWallet.address;
 
-      console.log('Creating transaction for signing...');
+      console.log('Creating EIP-3009 gasless authorization...');
 
       // Get the ethereum provider from the wallet
       const provider = await activeWallet.getEthereumProvider();
       console.log('Got ethereum provider');
 
-      // Get transaction count (nonce) using provider.request directly
-      // Use 'pending' to include unconfirmed transactions
-      console.log('Fetching nonce...');
-      const nonceHex = await provider.request({
-        method: 'eth_getTransactionCount',
-        params: [walletAddress, 'pending'],
-      }) as string;
-      const nonce = parseInt(nonceHex, 16);
-      console.log('Got nonce:', nonce);
+      // Generate random 32-byte nonce for EIP-3009 (not sequential like transaction nonce)
+      const randomNonce = ethers.hexlify(ethers.randomBytes(32));
+      console.log('Generated random nonce:', randomNonce);
 
-      // Create ERC20 contract interface for encoding the transfer
-      const erc20Interface = new ethers.Interface([
-        'function transfer(address to, uint256 amount) returns (bool)'
-      ]);
+      // Set time window for authorization validity
+      const validAfter = 0; // Valid immediately
+      const validBefore = Math.floor(Date.now() / 1000) + 3600; // Valid for 1 hour
+      console.log('Valid after:', validAfter, 'Valid before:', validBefore);
 
-      // Convert amount to BigInt for proper encoding
-      const amountBigInt = BigInt(PAYMENT_CONFIG.lensPaymentAmount);
-      console.log('Transfer amount (wei):', PAYMENT_CONFIG.lensPaymentAmount);
-      console.log('Transfer amount (BigInt):', amountBigInt.toString());
-
-      // Encode the transfer function call
-      const data = erc20Interface.encodeFunctionData('transfer', [
-        PAYMENT_CONFIG.recipientAddress,
-        amountBigInt,
-      ]);
-      console.log('Encoded transfer data:', data);
-
-      // Create the complete transaction object with all required parameters
-      // Note: User sees gas estimate in wallet, but x402 facilitator pays the actual gas
-      const transaction = {
-        from: walletAddress,
-        to: PAYMENT_CONFIG.fluidTokenAddress,
-        data,
-        value: '0x0',
-        nonce: `0x${nonce.toString(16)}`,
-        chainId: `0x${PAYMENT_CONFIG.chainId.toString(16)}`,
-        gas: '0x186a0', // 100000 in hex
-        gasPrice: '0x3b9aca00', // 1 gwei in hex
+      // Create EIP-712 typed data for TransferWithAuthorization
+      const domain = PAYMENT_CONFIG.eip712Domain;
+      
+      const types = {
+        TransferWithAuthorization: [
+          { name: 'from', type: 'address' },
+          { name: 'to', type: 'address' },
+          { name: 'value', type: 'uint256' },
+          { name: 'validAfter', type: 'uint256' },
+          { name: 'validBefore', type: 'uint256' },
+          { name: 'nonce', type: 'bytes32' },
+        ],
       };
 
-      console.log('Requesting signature (facilitator will pay gas when broadcasting)...');
-      console.log('Transaction:', transaction);
-      
-      // Sign the transaction using eth_signTransaction
-      let signedTransaction: string;
+      const message = {
+        from: walletAddress,
+        to: PAYMENT_CONFIG.recipientAddress,
+        value: PAYMENT_CONFIG.lensPaymentAmount,
+        validAfter: validAfter,
+        validBefore: validBefore,
+        nonce: randomNonce,
+      };
+
+      console.log('EIP-712 domain:', JSON.stringify(domain, null, 2));
+      console.log('EIP-712 message:', JSON.stringify(message, null, 2));
+
+      // Request EIP-712 signature using eth_signTypedData_v4
+      // This is truly gasless - wallet doesn't check for ETH balance
+      let signature: string;
       try {
-        signedTransaction = await provider.request({
-          method: 'eth_signTransaction',
-          params: [transaction],
+        console.log('Requesting EIP-712 signature (gasless - no ETH needed)...');
+        
+        // Prepare typed data payload for eth_signTypedData_v4
+        const typedData = {
+          types: {
+            EIP712Domain: [
+              { name: 'name', type: 'string' },
+              { name: 'version', type: 'string' },
+              { name: 'chainId', type: 'uint256' },
+              { name: 'verifyingContract', type: 'address' },
+            ],
+            TransferWithAuthorization: types.TransferWithAuthorization,
+          },
+          primaryType: 'TransferWithAuthorization',
+          domain: domain,
+          message: message,
+        };
+
+        signature = await provider.request({
+          method: 'eth_signTypedData_v4',
+          params: [walletAddress, JSON.stringify(typedData)],
         }) as string;
-        console.log('Transaction signed successfully:', signedTransaction);
+        
+        console.log('EIP-712 signature obtained:', signature);
       } catch (signError: any) {
         console.error('Signing error:', signError);
         throw new Error(
           signError?.message || signError?.toString() ||
-          'Failed to sign transaction. Please ensure your wallet supports transaction signing.'
+          'Failed to sign authorization. Please ensure your wallet supports EIP-712 signatures.'
         );
       }
+
+      // Parse signature into v, r, s components
+      const sig = ethers.Signature.from(signature);
+      const authorization = {
+        from: walletAddress,
+        to: PAYMENT_CONFIG.recipientAddress,
+        value: PAYMENT_CONFIG.lensPaymentAmount,
+        validAfter: validAfter,
+        validBefore: validBefore,
+        nonce: randomNonce,
+        v: sig.v,
+        r: sig.r,
+        s: sig.s,
+      };
+
+      console.log('Authorization object:', JSON.stringify(authorization, null, 2));
 
       const paymentDetails: PaymentDetails = {
         networkId: PAYMENT_CONFIG.networkId,
@@ -179,10 +194,10 @@ export function usePayment() {
 
       console.log('Payment details to send to x402:', JSON.stringify(paymentDetails, null, 2));
       
-      // Skip verify step and go directly to settle to avoid x402 API decoding bug
-      console.log('Settling payment directly (facilitator broadcasts and pays gas)...');
+      // Send EIP-3009 authorization to x402 facilitator for settlement
+      console.log('Settling gasless payment (facilitator broadcasts and pays all gas)...');
       const settleRes = await settlePayment(
-        signedTransaction,
+        JSON.stringify(authorization),
         paymentDetails
       );
       setSettleResult(settleRes);
