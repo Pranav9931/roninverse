@@ -106,17 +106,17 @@ export function usePayment() {
       console.log('Creating transaction for signing...');
 
       // Get the ethereum provider from the wallet
-      const ethereumProvider = await activeWallet.getEthereumProvider();
+      const provider = await activeWallet.getEthereumProvider();
       console.log('Got ethereum provider');
-      
-      // Create an ethers provider and signer from Privy wallet
-      const provider = new ethers.BrowserProvider(ethereumProvider);
-      const signer = await provider.getSigner();
-      console.log('Created provider and signer');
 
-      // Get transaction count (nonce)
+      // Get transaction count (nonce) using provider.request directly
+      // Use 'pending' to include unconfirmed transactions
       console.log('Fetching nonce...');
-      const nonce = await provider.getTransactionCount(walletAddress);
+      const nonceHex = await provider.request({
+        method: 'eth_getTransactionCount',
+        params: [walletAddress, 'pending'],
+      }) as string;
+      const nonce = parseInt(nonceHex, 16);
       console.log('Got nonce:', nonce);
 
       // Create ERC20 contract interface for encoding the transfer
@@ -133,26 +133,31 @@ export function usePayment() {
       // Create the complete transaction object with all required parameters
       // Note: User sees gas estimate in wallet, but x402 facilitator pays the actual gas
       const transaction = {
+        from: walletAddress,
         to: PAYMENT_CONFIG.fluidTokenAddress,
         data,
-        value: 0,
-        nonce,
-        chainId: PAYMENT_CONFIG.chainId,
-        gasLimit: 100000, // Sufficient for ERC20 transfer
-        gasPrice: ethers.parseUnits('1', 'gwei'), // 1 gwei
+        value: '0x0',
+        nonce: `0x${nonce.toString(16)}`,
+        chainId: `0x${PAYMENT_CONFIG.chainId.toString(16)}`,
+        gas: '0x186a0', // 100000 in hex
+        gasPrice: '0x3b9aca00', // 1 gwei in hex
       };
 
       console.log('Requesting signature (facilitator will pay gas when broadcasting)...');
+      console.log('Transaction:', transaction);
       
-      // Sign the transaction using ethers
+      // Sign the transaction using eth_signTransaction
       let signedTransaction: string;
       try {
-        signedTransaction = await signer.signTransaction(transaction);
-        console.log('Transaction signed successfully');
+        signedTransaction = await provider.request({
+          method: 'eth_signTransaction',
+          params: [transaction],
+        }) as string;
+        console.log('Transaction signed successfully:', signedTransaction);
       } catch (signError: any) {
         console.error('Signing error:', signError);
         throw new Error(
-          signError?.message || 
+          signError?.message || signError?.toString() ||
           'Failed to sign transaction. Please ensure your wallet supports transaction signing.'
         );
       }
