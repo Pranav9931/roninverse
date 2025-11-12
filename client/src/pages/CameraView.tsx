@@ -7,7 +7,7 @@ import LensCarousel, { Lens } from '@/components/LensCarousel';
 import PermissionScreen from '@/components/PermissionScreen';
 import PhotoPreview from '@/components/PhotoPreview';
 import AuthGuard from '@/components/AuthGuard';
-import { Loader2, LogOut } from 'lucide-react';
+import { Loader2, LogOut, SwitchCamera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
@@ -40,7 +40,9 @@ function CameraViewContent() {
     error,
     requestPermission,
     applyLens,
-    capturePhoto
+    capturePhoto,
+    toggleCamera,
+    isFrontCamera
   } = useCameraKit(containerRef, canvasRef);
 
   const handleLensSelect = async (lens: Lens) => {
@@ -166,6 +168,18 @@ function CameraViewContent() {
               onLensSelect={handleLensSelect}
               selectedLensId={selectedLensId}
             />
+          </div>
+
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 z-30">
+            <Button
+              onClick={toggleCamera}
+              size="icon"
+              variant="ghost"
+              className="text-white hover:bg-white/10 rounded-full h-12 w-12"
+              data-testid="button-switch-camera"
+            >
+              <SwitchCamera className="w-6 h-6" />
+            </Button>
           </div>
 
           <CameraControls
