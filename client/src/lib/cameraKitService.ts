@@ -17,17 +17,21 @@ export const initializeCamera = async ({ canvas, facingMode }: InitOptions): Pro
   try {
     console.log('Initializing Camera Kit...');
     
-    const { bootstrapCameraKit } = await import('@snap/camera-kit');
+    if (!cameraKit) {
+      const { bootstrapCameraKit } = await import('@snap/camera-kit');
+      
+      const apiToken = (window as any).SNAP_CUSTOM_API_KEY || SNAP_API_TOKEN;
+      
+      cameraKit = await bootstrapCameraKit({
+        apiToken
+      });
+      console.log('CameraKit initialized successfully');
+    }
     
-    const apiToken = (window as any).SNAP_CUSTOM_API_KEY || SNAP_API_TOKEN;
-    
-    cameraKit = await bootstrapCameraKit({
-      apiToken
-    });
-    console.log('CameraKit initialized successfully');
-    
-    session = await cameraKit.createSession({ liveRenderTarget: canvas });
-    console.log('Session created successfully');
+    if (!session) {
+      session = await cameraKit.createSession({ liveRenderTarget: canvas });
+      console.log('Session created successfully');
+    }
     
     const mediaStream = await navigator.mediaDevices.getUserMedia({
       video: {
@@ -141,6 +145,33 @@ export const captureCanvas = async (
     return dataUrl;
   } catch (error) {
     console.error('Failed to capture photo:', error);
+    throw error;
+  }
+};
+
+export const switchCamera = async (facingMode: 'user' | 'environment'): Promise<MediaStream> => {
+  if (!session) {
+    throw new Error('Camera Kit session not initialized');
+  }
+
+  try {
+    console.log(`Switching camera to ${facingMode}...`);
+    
+    const mediaStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode,
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+    });
+    console.log('Got new media stream successfully');
+    
+    await session.setSource(mediaStream);
+    console.log('Updated session source successfully');
+    
+    return mediaStream;
+  } catch (error) {
+    console.error('Failed to switch camera:', error);
     throw error;
   }
 };

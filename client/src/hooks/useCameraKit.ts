@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, RefObject } from 'react';
-import { initializeCamera, applyLensToCanvas, captureCanvas, cleanupCamera } from '../lib/cameraKitService';
+import { initializeCamera, applyLensToCanvas, captureCanvas, cleanupCamera, switchCamera } from '../lib/cameraKitService';
 
 type CameraStatus = 'loading' | 'permission_needed' | 'ready' | 'error';
 
@@ -66,7 +66,7 @@ export const useCameraKit = (
         console.warn('Error during Camera Kit cleanup:', err);
       });
     };
-  }, [containerRef, canvasRef, isFrontCamera]);
+  }, [containerRef, canvasRef]);
 
   const requestPermission = async () => {
     try {
@@ -88,12 +88,20 @@ export const useCameraKit = (
   };
 
   const toggleCamera = async () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+    try {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      
+      const newFacingMode = !isFrontCamera;
+      const stream = await switchCamera(newFacingMode ? 'user' : 'environment');
+      
+      streamRef.current = stream;
+      setIsFrontCamera(newFacingMode);
+    } catch (err) {
+      console.error('Failed to toggle camera:', err);
+      setError(err instanceof Error ? err.message : 'Failed to switch camera');
     }
-    
-    await cleanupCamera();
-    setIsFrontCamera(prev => !prev);
   };
 
   const toggleFlash = () => {
