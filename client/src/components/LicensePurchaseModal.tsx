@@ -138,10 +138,12 @@ export default function LicensePurchaseModal({
       // Encode the function call
       const iface = new ethers.Interface(gameABI);
       const numericGameId = lensId ? getLensGameId(lensId) : gameId;
-      const data = iface.encodeFunctionData('purchaseLicense', [numericGameId]);
+      const data = iface.encodeFunctionData('purchaseLicense', [ethers.toBigInt(numericGameId)]);
       if (!data) {
         throw new Error('Failed to encode function');
       }
+      
+      console.log('Encoded function data:', data, 'for gameId:', numericGameId);
 
       // Parse value
       const priceStr = String(price);
