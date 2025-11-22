@@ -88,19 +88,9 @@ function HomeContent() {
                 <div className="absolute inset-0 flex flex-col justify-between p-6 text-white">
                   <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-3 justify-between">
-                      <div className="flex items-center gap-3">
-                        {app.logo && (
-                          <img 
-                            src={app.logo} 
-                            alt={app.name} 
-                            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                            data-testid={`logo-app-${app.id}`}
-                          />
-                        )}
-                        <h3 className="text-2xl font-bold drop-shadow-2xl" data-testid={`text-app-name-${app.id}`}>
-                          {app.name}
-                        </h3>
-                      </div>
+                      <h3 className="text-2xl font-bold drop-shadow-2xl" data-testid={`text-app-name-${app.id}`}>
+                        {app.name}
+                      </h3>
                       {app.price && (
                         <Badge variant="secondary" className="bg-primary text-black font-bold">
                           {hasLicense ? '✓ Owned' : `${app.price} XRT`}
@@ -116,6 +106,16 @@ function HomeContent() {
                       </p>
                     )}
                   </div>
+                  {app.logo && (
+                    <div className="flex justify-start pt-4">
+                      <img 
+                        src={app.logo} 
+                        alt={app.name} 
+                        className="w-12 h-12 rounded-full object-cover"
+                        data-testid={`logo-app-${app.id}`}
+                      />
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
