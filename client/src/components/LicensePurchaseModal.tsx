@@ -56,6 +56,47 @@ export default function LicensePurchaseModal({
       }
 
       toast({
+        title: 'Requesting network switch...',
+        description: 'Please approve switching to Saga network in your Keplr wallet',
+      });
+
+      // Request Keplr to switch to Saga network
+      const chainIdHex = `0x${SAGA_CHAIN_CONFIG.networkId.toString(16)}`;
+      
+      try {
+        await provider.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: chainIdHex }],
+        });
+      } catch (switchError: any) {
+        // If the chain doesn't exist, try to add it
+        if (switchError.code === 4902) {
+          try {
+            await provider.request({
+              method: 'wallet_addEthereumChain',
+              params: [
+                {
+                  chainId: chainIdHex,
+                  chainName: 'Saga - openxr',
+                  rpcUrls: [SAGA_CHAIN_CONFIG.rpcUrl],
+                  nativeCurrency: {
+                    name: 'XRT',
+                    symbol: 'XRT',
+                    decimals: 18,
+                  },
+                  blockExplorerUrls: [SAGA_CHAIN_CONFIG.blockExplorer],
+                },
+              ],
+            });
+          } catch (addError) {
+            throw new Error('Failed to add Saga network to Keplr');
+          }
+        } else {
+          throw switchError;
+        }
+      }
+
+      toast({
         title: 'Awaiting wallet confirmation...',
         description: 'Please approve the transaction in your Keplr wallet',
       });
@@ -79,6 +120,14 @@ export default function LicensePurchaseModal({
         throw new Error(`Address mismatch: Keplr has ${signerAddress}, but app expects ${user.wallet.address}`);
       }
 
+      // Verify we're on the right network
+      const network = await ethersProvider.getNetwork();
+      if (network.chainId !== SAGA_CHAIN_CONFIG.networkId) {
+        throw new Error(
+          `Wrong network detected: You're on chain ${network.chainId}, but should be on ${SAGA_CHAIN_CONFIG.networkId}.`
+        );
+      }
+
       // Encode the function call
       const iface = new ethers.Interface(gameABI);
       const data = iface.encodeFunctionData('purchaseLicense', [gameId]);
@@ -95,18 +144,6 @@ export default function LicensePurchaseModal({
       } catch (e) {
         console.error('Failed to parse value:', priceStr, e);
         throw new Error(`Invalid price value: ${priceStr}. Expected a number.`);
-      }
-
-      if (!value || value <= 0n) {
-        throw new Error(`Invalid value: ${value}`);
-      }
-
-      // Get current network
-      const network = await ethersProvider.getNetwork();
-      if (network.chainId !== SAGA_CHAIN_CONFIG.networkId) {
-        throw new Error(
-          `Wrong network: You're on chain ${network.chainId}, but should be on ${SAGA_CHAIN_CONFIG.networkId}. Please switch to Saga network in Keplr.`
-        );
       }
 
       // Send transaction
@@ -153,7 +190,7 @@ export default function LicensePurchaseModal({
           errorMessage = 'You cancelled the transaction';
         } else if (err.message.includes('insufficient funds')) {
           errorMessage = 'Insufficient XRT balance in your wallet';
-        } else if (err.message.includes('network')) {
+        } else if (err.message.includes('network') || err.message.includes('chain')) {
           errorMessage = err.message;
         } else {
           errorMessage = err.message;
