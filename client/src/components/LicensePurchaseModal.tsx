@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { usePrivy, useWalletProvider } from '@privy-io/react-auth';
+import { usePrivy } from '@privy-io/react-auth';
 import { useToast } from '@/hooks/use-toast';
 import { ethers } from 'ethers';
 import { SAGA_CHAIN_CONFIG, GAME_LICENSING_CONFIG } from '@/lib/sagaChain';
@@ -22,7 +22,6 @@ export default function LicensePurchaseModal({
   gameId = GAME_LICENSING_CONFIG.arLensesGameId,
 }: LicensePurchaseModalProps) {
   const { user } = usePrivy();
-  const provider = useWalletProvider();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -36,10 +35,10 @@ export default function LicensePurchaseModal({
       return;
     }
 
-    if (!provider) {
+    if (typeof window === 'undefined' || !window.ethereum) {
       toast({
-        title: 'Wallet provider not available',
-        description: 'Please ensure your wallet is properly connected',
+        title: 'Wallet not found',
+        description: 'Please ensure your wallet extension is installed',
         variant: 'destructive',
       });
       return;
@@ -48,9 +47,9 @@ export default function LicensePurchaseModal({
     try {
       setLoading(true);
       
-      // Create ethers provider and signer from the connected wallet provider
-      const ethersProvider = new ethers.providers.Web3Provider(provider);
-      const signer = ethersProvider.getSigner();
+      // Create ethers provider and signer from the injected wallet
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
       
       const contract = new ethers.Contract(
         GAME_LICENSING_CONFIG.contractAddress,
@@ -58,7 +57,7 @@ export default function LicensePurchaseModal({
         signer
       );
 
-      const priceInWei = ethers.utils.parseEther(GAME_LICENSING_CONFIG.arLensesPrice);
+      const priceInWei = ethers.parseEther(GAME_LICENSING_CONFIG.arLensesPrice);
       
       toast({
         title: 'Awaiting wallet confirmation...',
@@ -146,7 +145,7 @@ export default function LicensePurchaseModal({
 
           <Button
             onClick={handlePurchase}
-            disabled={loading || !provider}
+            disabled={loading}
             className="w-full"
             size="lg"
           >
