@@ -5,20 +5,29 @@ import { usePrivy } from '@privy-io/react-auth';
 import { LogOut } from 'lucide-react';
 import { useLicense } from '@/hooks/useLicense';
 import { mockLenses } from '@/pages/Marketplace';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import LicensePurchaseModal from '@/components/LicensePurchaseModal';
 import { Lens } from '@/types/lens';
 
 // Component to handle individual lens card with license checking
 function LensCard({ 
   lens, 
-  onPurchase 
+  onPurchase,
+  refreshKey 
 }: { 
   lens: Lens; 
   onPurchase: (lensId: string) => void;
+  refreshKey: number;
 }) {
   const [, setLocation] = useLocation();
-  const { hasLicense, loading } = useLicense(lens.id);
+  const { hasLicense, loading, refetch } = useLicense(lens.id);
+  
+  // Refetch license status when refreshKey changes
+  useEffect(() => {
+    if (refreshKey > 0) {
+      refetch();
+    }
+  }, [refreshKey, refetch]);
 
   const handleClick = () => {
     if (loading) return;
@@ -102,10 +111,18 @@ function HomeContent() {
   const { logout } = usePrivy();
   const [selectedLensForPurchase, setSelectedLensForPurchase] = useState<string | null>(null);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handlePurchase = (lensId: string) => {
     setSelectedLensForPurchase(lensId);
     setShowPurchaseModal(true);
+  };
+
+  const handlePurchaseSuccess = () => {
+    setShowPurchaseModal(false);
+    setSelectedLensForPurchase(null);
+    // Trigger refresh of all license statuses
+    setRefreshKey(prev => prev + 1);
   };
 
   return (
@@ -148,7 +165,7 @@ function HomeContent() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
           {mockLenses.map((lens) => (
-            <LensCard key={lens.id} lens={lens} onPurchase={handlePurchase} />
+            <LensCard key={lens.id} lens={lens} onPurchase={handlePurchase} refreshKey={refreshKey} />
           ))}
         </div>
       </main>
@@ -160,11 +177,7 @@ function HomeContent() {
           lensId={selectedLensForPurchase}
           price={mockLenses.find(l => l.id === selectedLensForPurchase)?.price || 0}
           title={mockLenses.find(l => l.id === selectedLensForPurchase)?.displayName || 'AR Filter'}
-          onPurchaseSuccess={() => {
-            setShowPurchaseModal(false);
-            setSelectedLensForPurchase(null);
-            // User can click to use filter after purchase
-          }}
+          onPurchaseSuccess={handlePurchaseSuccess}
         />
       )}
     </div>
