@@ -18,9 +18,22 @@ export default function CameraControls({
   const [showWalletDialog, setShowWalletDialog] = useState(false);
   const [copied, setCopied] = useState(false);
   const [creating, setCreating] = useState(false);
-  const { user, createWallet } = usePrivy();
+  const { user, createWallet, ready } = usePrivy();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+
+  const getWalletAddress = (): string | undefined => {
+    if (user?.wallet?.address && typeof user.wallet.address === 'string' && user.wallet.address.length > 0) {
+      return user.wallet.address;
+    }
+    const walletAccount = user?.linkedAccounts?.find(
+      (account: any) => account.type === 'wallet' && 'address' in account && 
+        typeof account.address === 'string' && account.address.length > 0
+    );
+    return walletAccount && 'address' in walletAccount ? walletAccount.address : undefined;
+  };
+
+  const hasWallet = !!getWalletAddress();
 
   const handleCapture = () => {
     if (!disabled) {
@@ -32,7 +45,7 @@ export default function CameraControls({
   };
 
   const handleCopyAddress = async () => {
-    const address = user?.wallet?.address;
+    const address = getWalletAddress();
     if (address) {
       await navigator.clipboard.writeText(address);
       setCopied(true);
@@ -45,6 +58,14 @@ export default function CameraControls({
   };
 
   const handleCreateWallet = async () => {
+    if (hasWallet) {
+      toast({
+        title: 'Wallet already exists',
+        description: 'You already have a wallet connected',
+      });
+      return;
+    }
+    
     try {
       setCreating(true);
       await createWallet();
@@ -115,7 +136,13 @@ export default function CameraControls({
           </DialogHeader>
 
           <div className="space-y-4">
-            {!user?.wallet ? (
+            {!ready ? (
+              <div className="text-center py-6">
+                <p className="text-sm text-muted-foreground">
+                  Loading wallet information...
+                </p>
+              </div>
+            ) : !hasWallet ? (
               <div className="text-center py-6">
                 <p className="text-sm text-muted-foreground mb-4">
                   You don't have an embedded wallet yet. Create one to get started.
@@ -139,7 +166,7 @@ export default function CameraControls({
                     data-testid="text-wallet-address"
                     className="flex-1 p-3 bg-muted rounded-md text-sm font-mono break-all"
                   >
-                    {user.wallet.address}
+                    {getWalletAddress()}
                   </code>
                   <Button
                     data-testid="button-copy-address"
