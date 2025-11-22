@@ -13,8 +13,14 @@
  * PRIVATE_KEY=your_owner_wallet_private_key node scripts/deploy-games.js
  */
 
-const ethers = require('ethers');
-const gameABI = require('../client/src/lib/gameABI.json');
+import { ethers } from 'ethers';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const gameABI = JSON.parse(readFileSync(join(__dirname, '../client/src/lib/gameABI.json'), 'utf8'));
 
 const CONTRACT_ADDRESS = '0x91C7B6f8905060D6aE711878020DB15E90C697E0';
 const RPC_URL = 'https://openxr-2763783314764000-1.jsonrpc.sagarpc.io';
