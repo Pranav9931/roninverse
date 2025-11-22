@@ -59,27 +59,26 @@ export default function LicensePurchaseModal({
         description: 'Please approve the transaction in your Keplr wallet',
       });
 
-      // Create ethers provider and signer
+      // Use JSON-RPC provider for more direct control
+      const rpcProvider = new ethers.JsonRpcProvider(SAGA_CHAIN_CONFIG.rpcUrl);
       const ethersProvider = new ethers.BrowserProvider(provider);
       const signer = await ethersProvider.getSigner();
+      
       const userAddress = await signer.getAddress();
-
       if (userAddress.toLowerCase() !== user.wallet.address.toLowerCase()) {
         throw new Error('Wallet address mismatch');
       }
 
-      // Create contract and call function
-      const contract = new ethers.Contract(
-        GAME_LICENSING_CONFIG.contractAddress,
-        gameABI,
-        signer
-      );
+      // Encode function call
+      const iface = new ethers.Interface(gameABI);
+      const data = iface.encodeFunctionData('purchaseLicense', [gameId]);
+      const value = ethers.parseEther(GAME_LICENSING_CONFIG.arLensesPrice);
 
-      const priceInWei = ethers.parseEther(GAME_LICENSING_CONFIG.arLensesPrice);
-
-      // Send transaction - let signer handle gas estimation
-      const txResponse = await contract.purchaseLicense(gameId, {
-        value: priceInWei,
+      // Prepare and send transaction
+      const txResponse = await signer.sendTransaction({
+        to: GAME_LICENSING_CONFIG.contractAddress,
+        data: data,
+        value: value,
       });
 
       toast({
