@@ -27,3 +27,17 @@ export const SAGA_CHAIN_CONFIG = {
   gasReturnAccount: '0x31Ae3219702319430a6940AE201c5e8b4D5fe7F1',
   networkId: 2763783314764000,
 };
+
+export const PRIVY_CHAINS = [
+  {
+    chainId: SAGA_CHAIN_CONFIG.networkId,
+    name: 'Saga - openxr',
+    rpcUrl: SAGA_CHAIN_CONFIG.rpcUrl,
+    nativeCurrency: {
+      name: 'XRT',
+      symbol: 'XRT',
+      decimals: 18,
+    },
+    blockExplorerUrl: SAGA_CHAIN_CONFIG.blockExplorer,
+  },
+];
