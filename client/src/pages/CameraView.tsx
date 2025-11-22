@@ -3,6 +3,7 @@ import { useParams, useLocation } from 'wouter';
 import { useCameraKit } from '@/hooks/useCameraKit';
 import { usePrivy } from '@privy-io/react-auth';
 import CameraControls from '@/components/CameraControls';
+import LensCarousel from '@/components/LensCarousel';
 import PermissionScreen from '@/components/PermissionScreen';
 import PhotoPreview from '@/components/PhotoPreview';
 import AuthGuard from '@/components/AuthGuard';
@@ -10,6 +11,7 @@ import { mockLenses } from '@/pages/Marketplace';
 import { Loader2, LogOut, SwitchCamera, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { Lens } from '@/types/lens';
 
 function CameraViewContent() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -18,6 +20,7 @@ function CameraViewContent() {
   const [, setLocation] = useLocation();
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [lensApplied, setLensApplied] = useState(false);
+  const [currentLensId, setCurrentLensId] = useState<string | undefined>(lensId);
   const { logout } = usePrivy();
   const { toast } = useToast();
 
@@ -41,6 +44,7 @@ function CameraViewContent() {
         applyLens(selectedLens.id, selectedLens.groupId || null)
           .then(() => {
             setLensApplied(true);
+            setCurrentLensId(selectedLens.id);
             toast({
               title: 'Lens applied',
               description: `${selectedLens.name} is ready`,
@@ -57,6 +61,24 @@ function CameraViewContent() {
       }
     }
   }, [status, lensId, lensApplied, applyLens, toast]);
+
+  const handleLensSelect = async (lens: Lens) => {
+    try {
+      setCurrentLensId(lens.id);
+      await applyLens(lens.id, lens.groupId || null);
+      toast({
+        title: 'Lens switched',
+        description: `Now using ${lens.displayName}`,
+      });
+    } catch (err: any) {
+      console.error('Failed to apply lens:', err);
+      toast({
+        title: 'Failed to switch lens',
+        description: err.message || 'Please try again',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleCapture = async () => {
     console.log('Capturing photo...');
@@ -89,88 +111,94 @@ function CameraViewContent() {
 
   return (
     <div className="fixed inset-0 bg-black overflow-hidden" ref={containerRef}>
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full object-cover"
-          data-testid="canvas-camera"
-        />
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full object-cover"
+        data-testid="canvas-camera"
+      />
 
-        <div 
-          className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" 
-          aria-hidden="true"
-        />
+      <div 
+        className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" 
+        aria-hidden="true"
+      />
 
-        <div className="absolute inset-x-0 top-0 z-30 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => setLocation('/')}
-                size="icon"
-                variant="ghost"
-                className="text-white hover:bg-white/10"
-                data-testid="button-back"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <div className="text-white text-3xl font-bold" style={{ fontFamily: 'Lexlox, sans-serif', color: '#ffffff' }}>
-                o7
-              </div>
+      <div className="absolute inset-x-0 top-0 z-30 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setLocation('/')}
+              size="icon"
+              variant="ghost"
+              className="text-white hover:bg-white/10"
+              data-testid="button-back"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div className="text-white text-3xl font-bold" style={{ fontFamily: 'Lexlox, sans-serif', color: '#ffffff' }}>
+              o7
             </div>
-            <div className="flex items-center gap-3">
-              <div className="text-white/70 text-xs uppercase tracking-widest">
-                {status === 'loading' ? 'Initializing...' : status === 'ready' ? 'Ready' : 'Error'}
-              </div>
-              <Button
-                onClick={logout}
-                size="icon"
-                variant="ghost"
-                className="text-white hover:bg-white/10"
-                data-testid="button-logout"
-              >
-                <LogOut className="w-5 h-5" />
-              </Button>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-white/70 text-xs uppercase tracking-widest">
+              {status === 'loading' ? 'Initializing...' : status === 'ready' ? 'Ready' : 'Error'}
             </div>
+            <Button
+              onClick={logout}
+              size="icon"
+              variant="ghost"
+              className="text-white hover:bg-white/10"
+              data-testid="button-logout"
+            >
+              <LogOut className="w-5 h-5" />
+            </Button>
           </div>
         </div>
-
-        {status === 'loading' && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-40">
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="w-12 h-12 text-white animate-spin" />
-              <p className="text-white text-sm">Loading camera...</p>
-            </div>
-          </div>
-        )}
-
-        {status === 'ready' && (
-          <>
-            <div className="absolute right-6 top-1/2 -translate-y-1/2 z-30">
-              <Button
-                onClick={toggleCamera}
-                size="icon"
-                variant="ghost"
-                className="text-white hover:bg-white/10 rounded-full h-12 w-12"
-                data-testid="button-switch-camera"
-              >
-                <SwitchCamera className="w-6 h-6" />
-              </Button>
-            </div>
-
-            <CameraControls
-              onCapture={handleCapture}
-              disabled={status !== 'ready'}
-            />
-          </>
-        )}
-
-        {status === 'error' && error && (
-          <div className="absolute bottom-32 left-0 right-0 z-30 px-6">
-            <div className="bg-destructive/90 backdrop-blur-lg text-destructive-foreground p-4 rounded-2xl text-center">
-              <p className="text-sm font-medium">{error}</p>
-            </div>
-          </div>
-        )}
       </div>
+
+      {status === 'loading' && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-40">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-12 h-12 text-white animate-spin" />
+            <p className="text-white text-sm">Loading camera...</p>
+          </div>
+        </div>
+      )}
+
+      {status === 'ready' && (
+        <>
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 z-30">
+            <Button
+              onClick={toggleCamera}
+              size="icon"
+              variant="ghost"
+              className="text-white hover:bg-white/10 rounded-full h-12 w-12"
+              data-testid="button-switch-camera"
+            >
+              <SwitchCamera className="w-6 h-6" />
+            </Button>
+          </div>
+
+          <LensCarousel
+            lenses={mockLenses}
+            onLensSelect={handleLensSelect}
+            currentLensId={currentLensId}
+          />
+
+          <CameraControls
+            onCapture={handleCapture}
+            disabled={status !== 'ready'}
+          />
+        </>
+      )}
+
+      {status === 'error' && error && (
+        <div className="absolute bottom-32 left-0 right-0 z-30 px-6">
+          <div className="bg-destructive/90 backdrop-blur-lg text-destructive-foreground p-4 rounded-2xl text-center">
+            <p className="text-sm font-medium">{error}</p>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
