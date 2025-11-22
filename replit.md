@@ -127,10 +127,10 @@ Preferred communication style: Simple, everyday language.
 
 ### November 22, 2025 - Netflix-Style UI Redesign
 - Redesigned lens selection page with Netflix-style horizontal cards (16:9 aspect ratio)
-- Added 12 high-quality stock cover images for AR lens cards
+- Added 12 abstract art and neon holographic cover images for AR lens cards
 - Created unified Lens type in `@/types/lens.ts` with displayName and coverImage fields
-- Updated lens naming: formatted as "Lens 01" through "Lens 12" with descriptive names like "Glowing Aura", "Radiant Beauty", "Neon Dreams"
-- Implemented gradient overlay system (left-to-right from black/90 to transparent) over sharp cover images
+- Updated lens naming: formatted as "Lens 01" through "Lens 12" with funky names like "Cosmic Vibes", "Rainbow Blast", "Pixel Paradise", "Electric Dreams"
+- Implemented bottom-to-top gradient overlay (from-black/90 via-black/40 to-transparent) over sharp cover images for Netflix-style appearance
 - Enhanced text hierarchy with prominent badges, bold display names, and drop shadows
 - Made lens selection completely free and instant (no payment flow)
 - Responsive grid layout: 1 column (mobile), 2 columns (medium), 3 columns (large)
