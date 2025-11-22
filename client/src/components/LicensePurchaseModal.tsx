@@ -140,13 +140,6 @@ export default function LicensePurchaseModal({
         console.warn('Could not verify network:', networkError);
       }
 
-      // Create contract instance
-      const contract = new ethers.Contract(
-        GAME_LICENSING_CONFIG.contractAddress,
-        gameABI,
-        signer
-      );
-
       const numericGameId = lensId ? getLensGameId(lensId) : gameId;
       
       // Parse value
@@ -155,32 +148,26 @@ export default function LicensePurchaseModal({
 
       console.log('Purchasing license with gameId:', numericGameId, 'price:', valueInWei.toString());
 
-      // Call purchaseLicense with value only - let provider estimate gas
-      let txHash;
-      try {
-        const txResponse = await contract.purchaseLicense(
-          ethers.toBigInt(numericGameId),
-          { 
-            value: valueInWei
-          }
-        );
-        txHash = txResponse?.hash || txResponse;
-      } catch (error) {
-        console.error('Contract call error:', error);
-        throw error;
-      }
+      // Encode the function call manually
+      const iface = new ethers.Interface(gameABI);
+      const data = iface.encodeFunctionData('purchaseLicense', [ethers.toBigInt(numericGameId)]);
+      
+      // Build and send raw transaction
+      const txHash = await signer.sendTransaction({
+        to: GAME_LICENSING_CONFIG.contractAddress,
+        data: data,
+        value: valueInWei
+      });
 
       if (!txHash) {
         throw new Error('Transaction failed to send');
       }
 
-      // Transaction was successfully sent to the blockchain
-      // We have the transaction hash which proves it was submitted
       console.log('Transaction hash:', txHash);
 
       toast({
         title: 'License purchased!',
-        description: `Transaction submitted: ${txHash}`,
+        description: `Transaction submitted`,
       });
 
       onPurchaseSuccess?.();
