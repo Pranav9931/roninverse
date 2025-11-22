@@ -152,38 +152,62 @@ export default function LicensePurchaseModal({
       const iface = new ethers.Interface(gameABI);
       const data = iface.encodeFunctionData('purchaseLicense', [ethers.toBigInt(numericGameId)]);
       
+      console.log('Starting transaction send');
       console.log('Encoded data:', data);
       console.log('Signer:', signerAddress);
+      console.log('Value in wei:', valueInWei.toString());
       
-      // Send transaction via signer without waiting for receipt
-      let txResponse;
+      // Convert value to hex safely
+      let valueHex = '0x0';
+      if (valueInWei > 0n) {
+        valueHex = '0x' + valueInWei.toString(16);
+      }
+
+      console.log('Value hex:', valueHex);
+
+      const txParams = {
+        from: signerAddress,
+        to: GAME_LICENSING_CONFIG.contractAddress,
+        data: data,
+        value: valueHex
+      };
+
+      console.log('Transaction params:', JSON.stringify(txParams));
+      
+      // Use raw JSON-RPC to completely bypass ethers.js response parsing
+      let txHash: string;
       try {
-        txResponse = await signer.sendTransaction({
-          to: GAME_LICENSING_CONFIG.contractAddress,
-          data: data,
-          value: valueInWei
-          // Don't set nonce, gas, gasPrice - let Keplr calculate these
+        console.log('About to call provider.request');
+        const result = await provider.request({
+          method: 'eth_sendTransaction',
+          params: [txParams]
         });
-      } catch (sendError) {
-        console.error('Transaction send error:', sendError);
-        throw sendError;
+
+        console.log('Provider response received:', result);
+
+        // Result should be a string (the transaction hash)
+        // Don't try to parse or access properties - just use it directly
+        txHash = String(result).trim();
+        
+        if (!txHash || txHash === 'null' || txHash === 'undefined') {
+          throw new Error('No transaction hash returned from wallet');
+        }
+
+        console.log('Transaction hash:', txHash);
+
+        toast({
+          title: 'License purchased!',
+          description: `Transaction submitted`,
+        });
+
+        onPurchaseSuccess?.();
+        onOpenChange(false);
+      } catch (rpcError) {
+        console.error('Provider request error:', rpcError);
+        console.error('Error type:', typeof rpcError);
+        console.error('Error keys:', rpcError ? Object.keys(rpcError) : 'null');
+        throw rpcError;
       }
-
-      // Extract hash immediately - don't wait for receipt or try to parse response
-      const txHash = txResponse?.hash;
-      if (!txHash) {
-        throw new Error('Transaction failed - no hash received');
-      }
-
-      console.log('Transaction hash:', txHash);
-
-      toast({
-        title: 'License purchased!',
-        description: `Transaction submitted`,
-      });
-
-      onPurchaseSuccess?.();
-      onOpenChange(false);
     } catch (err) {
       console.error('Purchase error:', err);
 
