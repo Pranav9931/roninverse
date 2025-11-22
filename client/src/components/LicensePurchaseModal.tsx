@@ -129,32 +129,22 @@ export default function LicensePurchaseModal({
         throw new Error('Failed to encode function');
       }
 
-      // Parse value as string (wei)
+      // Parse value
       const priceStr = String(GAME_LICENSING_CONFIG.arLensesPrice);
-      const valueInWei = ethers.parseEther(priceStr).toString();
+      const valueInWei = ethers.parseEther(priceStr);
 
-      // Get current gas price
-      const rpcProvider = new ethers.JsonRpcProvider(SAGA_CHAIN_CONFIG.rpcUrl);
-      const gasPrice = await rpcProvider.getGasPrice();
-      const gasLimit = ethers.getBigInt('300000'); // Fixed gas limit
-
-      // Build transaction with explicit gas params to avoid estimation issues
+      // Build transaction with fixed gas params (standard values for contract call)
       const txData = {
         to: GAME_LICENSING_CONFIG.contractAddress,
         data: data,
         value: valueInWei,
-        gasLimit: gasLimit.toString(),
-        gasPrice: gasPrice.toString(),
+        gasLimit: ethers.toBigInt(300000), // Fixed gas limit for contract call
+        gasPrice: ethers.toBigInt('1000000000'), // 1 gwei - standard gas price
       };
 
-      console.log('Sending transaction:', {
-        to: txData.to,
-        gasLimit: txData.gasLimit,
-        gasPrice: txData.gasPrice,
-        value: txData.value,
-      });
+      console.log('Sending transaction:', txData);
 
-      // Send raw transaction using the signer
+      // Send transaction using the signer
       const txResponse = await signer.sendTransaction(txData);
 
       if (!txResponse || !txResponse.hash) {
