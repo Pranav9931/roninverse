@@ -7,7 +7,7 @@ import { usePrivy } from '@privy-io/react-auth';
 import { LogOut, Lock } from 'lucide-react';
 import { useLicense } from '@/hooks/useLicense';
 import { GAME_LICENSING_CONFIG } from '@/lib/sagaChain';
-import lenzLogo from '@assets/generated_images/lenz.dev_circular_lens_icon_-_no_text.png';
+import lenzLogo from '@assets/generated_images/lenz.dev_circular_lens_icon_-_red-orange_gradient.png';
 import lenzBackground from '@assets/generated_images/people_enjoying_ar_snapchat_filters_-_red-orange_warm_tones.png';
 
 interface XRApp {
@@ -83,6 +83,8 @@ function HomeContent() {
                   className="absolute inset-0 w-full h-full"
                   style={{
                     background: app.coverImage,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
                   }}
                 />
                 <div className="absolute inset-0" style={{
