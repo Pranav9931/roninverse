@@ -107,7 +107,7 @@ function HomeContent() {
                         {app.name}
                       </h3>
                       {app.price && (
-                        <Badge variant="secondary" className="bg-primary text-black font-bold">
+                        <Badge variant="secondary" className="font-bold" style={{ backgroundColor: '#C1FF72', color: '#000' }}>
                           {hasLicense ? '✓ Owned' : `${app.price} XRT`}
                         </Badge>
                       )}
