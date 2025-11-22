@@ -7,7 +7,7 @@ import { usePrivy } from '@privy-io/react-auth';
 import { LogOut, Lock } from 'lucide-react';
 import { useLicense } from '@/hooks/useLicense';
 import { GAME_LICENSING_CONFIG } from '@/lib/sagaChain';
-import lenzLogo from '@assets/generated_images/lenz.dev_logo_-_circular_camera_lens_design.png';
+import lenzLogo from '@assets/generated_images/lenz.dev_circular_lens_icon_-_no_text.png';
 
 interface XRApp {
   id: string;
@@ -86,21 +86,21 @@ function HomeContent() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                 <div className="absolute inset-0 flex flex-col justify-between p-6 text-white">
-                  {app.logo && (
-                    <div className="flex justify-center mt-2 mb-4">
-                      <img 
-                        src={app.logo} 
-                        alt={app.name} 
-                        className="w-24 h-24 rounded-full object-cover shadow-2xl drop-shadow-2xl"
-                        data-testid={`logo-app-${app.id}`}
-                      />
-                    </div>
-                  )}
                   <div className="flex flex-col gap-4">
-                    <div className="flex items-start justify-between">
-                      <h3 className="text-2xl font-bold drop-shadow-2xl" data-testid={`text-app-name-${app.id}`}>
-                        {app.name}
-                      </h3>
+                    <div className="flex items-center gap-3 justify-between">
+                      <div className="flex items-center gap-3">
+                        {app.logo && (
+                          <img 
+                            src={app.logo} 
+                            alt={app.name} 
+                            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                            data-testid={`logo-app-${app.id}`}
+                          />
+                        )}
+                        <h3 className="text-2xl font-bold drop-shadow-2xl" data-testid={`text-app-name-${app.id}`}>
+                          {app.name}
+                        </h3>
+                      </div>
                       {app.price && (
                         <Badge variant="secondary" className="bg-primary text-black font-bold">
                           {hasLicense ? '✓ Owned' : `${app.price} XRT`}
