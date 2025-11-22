@@ -4,7 +4,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PrivyProvider } from "@privy-io/react-auth";
-import { FLUENT_TESTNET } from "@/lib/paymentService";
 import CameraView from "@/pages/CameraView";
 import Marketplace from "@/pages/Marketplace";
 import NotFound from "@/pages/not-found";
@@ -40,8 +39,6 @@ function App() {
             createOnLogin: "all-users",
           },
         },
-        supportedChains: [FLUENT_TESTNET],
-        defaultChain: FLUENT_TESTNET,
       }}
     >
       <QueryClientProvider client={queryClient}>

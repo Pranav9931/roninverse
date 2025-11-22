@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import { useCameraKit } from '@/hooks/useCameraKit';
 import { usePrivy } from '@privy-io/react-auth';
-import { usePayment } from '@/hooks/usePayment';
 import CameraControls from '@/components/CameraControls';
 import LensCarousel, { Lens } from '@/components/LensCarousel';
 import PermissionScreen from '@/components/PermissionScreen';
@@ -33,7 +32,6 @@ function CameraViewContent() {
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const { logout, user } = usePrivy();
   const { toast } = useToast();
-  const { processPayment, loading: paymentLoading } = usePayment();
 
   const {
     status,
@@ -48,40 +46,19 @@ function CameraViewContent() {
   const handleLensSelect = async (lens: Lens) => {
     console.log('Selecting lens:', lens.name, 'ID:', lens.id, 'Group ID:', lens.groupId);
     
+    setSelectedLensId(lens.id);
+    
     try {
+      await applyLens(lens.id, lens.groupId || null);
       toast({
-        title: 'Processing payment',
-        description: 'Sending micropayment for lens access...',
+        title: 'Lens applied',
+        description: `Successfully applied ${lens.name}`,
       });
-
-      await processPayment();
-
+    } catch (lensErr: any) {
+      console.error('Lens application failed:', lensErr);
       toast({
-        title: 'Payment successful',
-        description: 'Applying lens...',
-      });
-
-      setSelectedLensId(lens.id);
-      
-      try {
-        await applyLens(lens.id, lens.groupId || null);
-        toast({
-          title: 'Lens applied',
-          description: `Successfully applied ${lens.name}`,
-        });
-      } catch (lensErr: any) {
-        console.error('Lens application failed:', lensErr);
-        toast({
-          title: 'Lens application failed',
-          description: lensErr.message || 'Unable to apply lens. Check console for details.',
-          variant: 'destructive',
-        });
-      }
-    } catch (err: any) {
-      console.error('Payment failed:', err);
-      toast({
-        title: 'Payment failed',
-        description: err.message || 'Unable to process payment. Please try again.',
+        title: 'Lens application failed',
+        description: lensErr.message || 'Unable to apply lens. Check console for details.',
         variant: 'destructive',
       });
     }
@@ -184,18 +161,9 @@ function CameraViewContent() {
 
           <CameraControls
             onCapture={handleCapture}
-            disabled={status !== 'ready' || paymentLoading}
+            disabled={status !== 'ready'}
           />
         </>
-      )}
-
-      {paymentLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-40">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-12 h-12 text-white animate-spin" />
-            <p className="text-white text-sm">Processing payment...</p>
-          </div>
-        </div>
       )}
 
       {status === 'error' && error && (
