@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PrivyProvider } from "@privy-io/react-auth";
+import Home from "@/pages/Home";
 import CameraView from "@/pages/CameraView";
 import Marketplace from "@/pages/Marketplace";
 import NotFound from "@/pages/not-found";
@@ -11,7 +12,9 @@ import NotFound from "@/pages/not-found";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Marketplace} />
+      <Route path="/" component={Home} />
+      <Route path="/lenses" component={Marketplace} />
+      <Route path="/app/:appId" component={Marketplace} />
       <Route path="/camera/:lensId" component={CameraView} />
       <Route path="/camera" component={CameraView} />
       <Route component={NotFound} />
