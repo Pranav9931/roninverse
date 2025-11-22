@@ -56,69 +56,79 @@ function HomeContent() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {mockLenses.map((lens) => {
             // Use hook to check license for each lens
             // eslint-disable-next-line react-hooks/rules-of-hooks
             const { hasLicense } = useLicense(lens.id);
             
             return (
-              <div key={lens.id} className="flex flex-col gap-4">
-                {/* Image Card */}
-                <Card
-                  className="hover-elevate active-elevate-2 cursor-pointer overflow-hidden border-0 flex-1"
-                  onClick={() => handleLensClick(lens.id)}
+              <div key={lens.id} className="cursor-pointer" onClick={() => handleLensClick(lens.id)}>
+                {/* Image Card - Clean and Simple */}
+                <div
+                  className="hover-elevate active-elevate-2 overflow-hidden rounded-3xl mb-4 relative"
                   data-testid={`card-lens-${lens.id}`}
                 >
-                  <CardContent className="p-0">
-                    <div className="aspect-[3/4] relative rounded-lg overflow-hidden">
-                      <img
-                        src={lens.coverImage}
-                        alt={lens.displayName}
-                        className="w-full h-full object-cover"
-                      />
-                      {/* Badge positioned in top right */}
-                      <div className="absolute top-3 right-3">
-                        <Badge className="font-bold text-xs" style={{ backgroundColor: '#C1FF72', color: '#000' }}>
-                          {lens.name}
-                        </Badge>
-                      </div>
+                  <div className="aspect-[9/16] relative bg-gray-900">
+                    <img
+                      src={lens.coverImage}
+                      alt={lens.displayName}
+                      className="w-full h-full object-cover"
+                    />
+                    {/* Badge positioned on image - top right */}
+                    <div className="absolute top-3 right-3 z-10">
+                      <span className="inline-block font-bold text-xs px-3 py-1.5 rounded-lg" style={{ backgroundColor: '#C1FF72', color: '#000' }}>
+                        {lens.name}
+                      </span>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
 
-                {/* Info Section Below Card */}
-                <div className="space-y-3">
+                {/* Content Below Image */}
+                <div className="px-1 space-y-3">
                   {/* Title */}
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 
-                      className="text-lg font-bold text-white leading-tight flex-1" 
-                      data-testid={`text-lens-name-${lens.id}`}
-                    >
-                      {lens.displayName}
-                    </h3>
-                    {!hasLicense && (
-                      <Lock className="w-4 h-4 text-white/50 flex-shrink-0 mt-1" />
-                    )}
-                  </div>
-
-                  {/* Price Info */}
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-xs text-gray-400 uppercase tracking-wider">Price</span>
-                    <span className="text-sm font-bold" style={{ color: '#C1FF72' }}>
-                      {hasLicense ? '✓ Owned' : `${lens.price} XRT`}
-                    </span>
-                  </div>
-
-                  {/* Purchase Button */}
-                  <Button
-                    className="w-full"
-                    onClick={() => handleLensClick(lens.id)}
-                    style={{ backgroundColor: '#C1FF72', color: '#000' }}
-                    data-testid={`button-lens-${lens.id}`}
+                  <h3 
+                    className="text-lg font-bold text-white" 
+                    data-testid={`text-lens-name-${lens.id}`}
                   >
-                    {hasLicense ? 'Use Filter' : 'Purchase'}
-                  </Button>
+                    {lens.displayName}
+                  </h3>
+
+                  {/* Status Row with Circular Badge */}
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-gray-400">AR Filter</span>
+                    <div className="h-8 w-8 rounded-full border-2 border-gray-600 flex items-center justify-center flex-shrink-0" style={{ borderColor: hasLicense ? '#C1FF72' : '#4b5563' }}>
+                      <span className="text-xs font-bold" style={{ color: hasLicense ? '#C1FF72' : '#9ca3af' }}>
+                        {hasLicense ? '✓' : lens.name.slice(0, 1)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="h-px bg-gray-800"></div>
+
+                  {/* Price Section */}
+                  <div className="space-y-3">
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-xs text-gray-500 uppercase tracking-widest font-semibold">Price</span>
+                      <span className="text-base font-bold" style={{ color: '#C1FF72' }}>
+                        {hasLicense ? '✓ Owned' : `${lens.price} XRT`}
+                      </span>
+                    </div>
+
+                    {/* Purchase Button */}
+                    <Button
+                      className="w-full font-semibold"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLensClick(lens.id);
+                      }}
+                      style={{ backgroundColor: '#C1FF72', color: '#000' }}
+                      data-testid={`button-lens-${lens.id}`}
+                    >
+                      {hasLicense ? 'Use Filter' : 'Purchase'}
+                    </Button>
+                  </div>
                 </div>
               </div>
             );
