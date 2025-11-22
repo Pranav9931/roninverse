@@ -27,7 +27,7 @@ function HomeContent() {
 
   const handleAppClick = (appId: string) => {
     if (appId === 'lenses') {
-      setLocation('/lenses');
+      setLocation('/camera');
     } else {
       setLocation(`/app/${appId}`);
     }
