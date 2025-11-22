@@ -112,56 +112,78 @@ export default function LicensePurchaseModal({
         description: 'Please approve the transaction in your Keplr wallet',
       });
 
-      // Use the raw Keplr provider directly without ethers.js wrapping
-      const signerAddress = user.wallet.address;
-      if (!signerAddress) {
-        throw new Error('Failed to get address from user');
+      // Create ethers provider from Keplr
+      const ethersProvider = new ethers.BrowserProvider(provider);
+      const signer = await ethersProvider.getSigner();
+      
+      if (!signer) {
+        throw new Error('Failed to get signer from Keplr');
       }
 
+      const signerAddress = await signer.getAddress();
+      if (!signerAddress) {
+        throw new Error('Failed to get address from signer');
+      }
+
+      if (signerAddress.toLowerCase() !== user.wallet.address.toLowerCase()) {
+        throw new Error(`Address mismatch`);
+      }
+
+      // Verify network
+      const network = await ethersProvider.getNetwork();
+      if (String(network.chainId) !== String(SAGA_CHAIN_CONFIG.networkId)) {
+        throw new Error(`Wrong network: switch to Saga`);
+      }
+
+      // Encode the function call
+      const iface = new ethers.Interface(gameABI);
       const numericGameId = lensId ? getLensGameId(lensId) : gameId;
-      
+      const data = iface.encodeFunctionData('purchaseLicense', [numericGameId]);
+      if (!data) {
+        throw new Error('Failed to encode function');
+      }
+
       // Parse value
       const priceStr = String(price);
       const valueInWei = ethers.parseEther(priceStr);
 
-      console.log('Purchasing license with gameId:', numericGameId, 'price:', valueInWei.toString());
+      // Build transaction with fixed gas params (standard values for contract call)
+      const txData = {
+        to: GAME_LICENSING_CONFIG.contractAddress,
+        data: data,
+        value: valueInWei,
+        gasLimit: ethers.toBigInt(300000), // Fixed gas limit for contract call
+        gasPrice: ethers.toBigInt('1000000000'), // 1 gwei - standard gas price
+      };
 
-      // Encode the function call manually
-      const iface = new ethers.Interface(gameABI);
-      const data = iface.encodeFunctionData('purchaseLicense', [ethers.toBigInt(numericGameId)]);
-      
-      // Convert BigInt to hex string
-      const valueHex = valueInWei === 0n ? '0x0' : '0x' + valueInWei.toString(16);
+      console.log('Sending transaction:', txData);
 
-      // Send transaction and let Keplr calculate gas/nonce
-      const txHash = await new Promise<string>((resolve, reject) => {
-        provider.request({
-          method: 'eth_sendTransaction',
-          params: [{
-            from: signerAddress,
-            to: GAME_LICENSING_CONFIG.contractAddress,
-            data: data,
-            value: valueHex
-            // Don't include nonce - let Keplr calculate it
-          }]
-        }).then((result: any) => {
-          if (!result || typeof result !== 'string') {
-            reject(new Error('Invalid response from wallet'));
-            return;
-          }
-          resolve(result);
-        }).catch(reject);
-      });
+      // Send transaction using the signer
+      const txResponse = await signer.sendTransaction(txData);
 
-      if (!txHash) {
-        throw new Error('Transaction failed - no hash received');
+      if (!txResponse || !txResponse.hash) {
+        throw new Error('Transaction failed to send');
       }
 
-      console.log('Transaction hash:', txHash);
+      toast({
+        title: 'Processing payment...',
+        description: 'Waiting for confirmation...',
+      });
+
+      // Wait for receipt
+      const receipt = await txResponse.wait(1);
+
+      if (!receipt) {
+        throw new Error('Transaction failed to confirm');
+      }
+
+      if (receipt.status === 0) {
+        throw new Error('Transaction reverted');
+      }
 
       toast({
         title: 'License purchased!',
-        description: `Transaction submitted`,
+        description: 'You now have access to AR Lenses!',
       });
 
       onPurchaseSuccess?.();
