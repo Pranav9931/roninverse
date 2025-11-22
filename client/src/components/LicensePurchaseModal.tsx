@@ -25,66 +25,77 @@ export default function LicensePurchaseModal({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
-  const getKeplrProvider = async () => {
+  const setupAndEnableKeplr = async () => {
     const w = window as any;
-    
-    // Check if Keplr is available
+
     if (!w.keplr) {
       throw new Error('Keplr wallet not found');
     }
 
-    // Enable Keplr
-    await w.keplr.enable(SAGA_CHAIN_CONFIG.chainId);
+    const chainId = SAGA_CHAIN_CONFIG.networkId;
 
-    // Get the EVM provider from Keplr
+    // First, suggest the chain to Keplr
+    try {
+      await w.keplr.experimentalSuggestChain({
+        chainId: chainId,
+        chainName: 'Saga - openxr',
+        rpc: SAGA_CHAIN_CONFIG.rpcUrl,
+        rest: 'https://openxr-2763783314764000-1.rest.sagarpc.io',
+        bip44: {
+          coinType: 60,
+        },
+        bech32Config: {
+          bech32PrefixAccAddr: 'saga',
+          bech32PrefixAccPub: 'sagapub',
+          bech32PrefixValAddr: 'sagavaloper',
+          bech32PrefixValPub: 'sagavaloperpub',
+          bech32PrefixConsAddr: 'sagavalcons',
+          bech32PrefixConsPub: 'sagavalconspub',
+        },
+        currencies: [
+          {
+            coinDenom: 'XRT',
+            coinMinimalDenom: 'uXRT',
+            coinDecimals: 18,
+          },
+        ],
+        feeCurrencies: [
+          {
+            coinDenom: 'XRT',
+            coinMinimalDenom: 'uXRT',
+            coinDecimals: 18,
+            gasPriceStep: {
+              low: 0.01,
+              average: 0.025,
+              high: 0.03,
+            },
+          },
+        ],
+        stakeCurrency: {
+          coinDenom: 'XRT',
+          coinMinimalDenom: 'uXRT',
+          coinDecimals: 18,
+        },
+      });
+    } catch (suggestErr: any) {
+      console.warn('Chain suggest error (may already exist):', suggestErr);
+    }
+
+    // Now enable the chain using numeric chain ID
+    try {
+      await w.keplr.enable(chainId);
+    } catch (enableErr) {
+      console.error('Keplr enable error:', enableErr);
+      throw new Error(`Failed to enable Keplr for this chain: ${enableErr instanceof Error ? enableErr.message : String(enableErr)}`);
+    }
+
+    // Get the EVM provider
     const provider = w.keplr.providers?.eip155;
     if (!provider) {
       throw new Error('Keplr EVM provider not available');
     }
 
     return provider;
-  };
-
-  const switchToSagaChain = async (provider: any) => {
-    try {
-      const chainId = await provider.request({ method: 'eth_chainId' });
-      const expectedChainId = `0x${SAGA_CHAIN_CONFIG.networkId.toString(16)}`;
-      
-      if (chainId === expectedChainId) {
-        return; // Already on correct chain
-      }
-
-      try {
-        await provider.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: expectedChainId }],
-        });
-      } catch (switchErr: any) {
-        if (switchErr.code === 4902) {
-          await provider.request({
-            method: 'wallet_addEthereumChain',
-            params: [
-              {
-                chainId: expectedChainId,
-                chainName: 'Saga - openxr',
-                rpcUrls: [SAGA_CHAIN_CONFIG.rpcUrl],
-                nativeCurrency: {
-                  name: 'XRT',
-                  symbol: 'XRT',
-                  decimals: 18,
-                },
-                blockExplorerUrls: [SAGA_CHAIN_CONFIG.blockExplorer],
-              },
-            ],
-          });
-        } else {
-          throw switchErr;
-        }
-      }
-    } catch (err) {
-      console.error('Chain switch error:', err);
-      throw new Error(`Failed to switch to Saga chain: ${err instanceof Error ? err.message : String(err)}`);
-    }
   };
 
   const handlePurchase = async () => {
@@ -100,20 +111,17 @@ export default function LicensePurchaseModal({
     try {
       setLoading(true);
 
-      // Get Keplr provider specifically
-      const provider = await getKeplrProvider();
+      // Setup and enable Keplr
+      const provider = await setupAndEnableKeplr();
 
-      // Switch to Saga chain
-      await switchToSagaChain(provider);
-
-      // Create provider and signer
+      // Create ethers provider and signer
       const ethersProvider = new ethers.BrowserProvider(provider);
       const signer = await ethersProvider.getSigner();
 
-      // Verify the signer address matches the connected wallet
+      // Verify signer address
       const signerAddress = await signer.getAddress();
       if (signerAddress.toLowerCase() !== user.wallet.address.toLowerCase()) {
-        throw new Error('Wallet address mismatch. Please switch to your connected wallet.');
+        throw new Error('Wallet address mismatch');
       }
 
       toast({
@@ -121,31 +129,25 @@ export default function LicensePurchaseModal({
         description: 'Please approve the transaction in your Keplr wallet',
       });
 
-      // Create contract instance with signer
+      // Create contract instance
       const contract = new ethers.Contract(
         GAME_LICENSING_CONFIG.contractAddress,
         gameABI,
         signer
       );
 
-      // Parse price
       const priceInWei = ethers.parseEther(GAME_LICENSING_CONFIG.arLensesPrice);
 
-      // Call contract method
+      // Send transaction
       const tx = await contract.purchaseLicense(gameId, {
         value: priceInWei,
       });
-
-      if (!tx) {
-        throw new Error('Transaction failed to initialize');
-      }
 
       toast({
         title: 'Processing payment...',
         description: 'Your transaction is being processed',
       });
 
-      // Wait for receipt
       const receipt = await tx.wait(1);
 
       if (!receipt) {
