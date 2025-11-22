@@ -7,6 +7,13 @@ import { ethers } from 'ethers';
 import { SAGA_CHAIN_CONFIG, GAME_LICENSING_CONFIG } from '@/lib/sagaChain';
 import gameABI from '@/lib/gameABI.json';
 import { Loader2 } from 'lucide-react';
+import { mockLenses } from '@/pages/Marketplace';
+
+// Helper function to convert lens ID to numeric gameId
+const getLensGameId = (lensId: string): number => {
+  const index = mockLenses.findIndex(lens => lens.id === lensId);
+  return index !== -1 ? index + 1 : parseInt(lensId) || 1;
+};
 
 interface LicensePurchaseModalProps {
   open: boolean;
@@ -130,8 +137,8 @@ export default function LicensePurchaseModal({
 
       // Encode the function call
       const iface = new ethers.Interface(gameABI);
-      const licenseKey = lensId ? lensId : gameId;
-      const data = iface.encodeFunctionData('purchaseLicense', [licenseKey]);
+      const numericGameId = lensId ? getLensGameId(lensId) : gameId;
+      const data = iface.encodeFunctionData('purchaseLicense', [numericGameId]);
       if (!data) {
         throw new Error('Failed to encode function');
       }
