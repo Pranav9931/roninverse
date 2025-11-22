@@ -90,7 +90,7 @@ function HomeContent() {
                 <div className="absolute inset-0" style={{
                   background: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0) 100%)'
                 }} />
-                <div className="absolute inset-0 flex flex-col gap-4 p-6 text-white">
+                <div className="absolute inset-0 flex flex-col justify-between p-6 text-white">
                   {app.logo && (
                     <div className="flex justify-start">
                       <img 
