@@ -125,7 +125,7 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### November 22, 2025 - Netflix-Style UI Redesign
+### November 22, 2025 - Netflix-Style UI Redesign & Responsive Design
 - Redesigned lens selection page with Netflix-style horizontal cards (16:9 aspect ratio)
 - Added 12 abstract art and neon holographic cover images for AR lens cards
 - Created unified Lens type in `@/types/lens.ts` with displayName and coverImage fields
@@ -133,6 +133,15 @@ Preferred communication style: Simple, everyday language.
 - Implemented bottom-to-top gradient overlay (from-black/90 via-black/40 to-transparent) over sharp cover images for Netflix-style appearance
 - Enhanced text hierarchy with prominent badges, bold display names, and drop shadows
 - Made lens selection completely free and instant (no payment flow)
-- Responsive grid layout: 1 column (mobile), 2 columns (medium), 3 columns (large)
 - Removed Fluent testnet and x402 payment infrastructure
 - Cleaned up wallet dialog to remove payment-related UI
+- Added logout button to both Marketplace and CameraView pages
+
+**Responsive Design Implementation:**
+- Marketplace page: Fully responsive grid layout (1 col mobile, 2 cols sm, 3 cols lg, 4 cols xl)
+- Marketplace page: Max-width constraint (max-w-7xl) centers content on desktop monitors
+- Marketplace page: Responsive text sizes, icon sizes, spacing, and header height across breakpoints
+- CameraView page: Constrained camera view on desktop (max-w-2xl, centered with rounded corners)
+- CameraView page: Full-screen camera on mobile, 90vh with subtle rounding on desktop
+- CameraView page: Responsive button sizing, icon sizing, and status text visibility (hidden on mobile)
+- All components adapt smoothly between mobile and desktop form factors
