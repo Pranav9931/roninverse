@@ -69,21 +69,21 @@ function HomeContent() {
                 data-testid={`card-lens-${lens.id}`}
               >
                 <CardContent className="p-0 relative flex-1">
-                  <div className="aspect-video relative">
+                  <div className="aspect-[3/4] relative">
                     <img
                       src={lens.coverImage}
                       alt={lens.displayName}
                       className="absolute inset-0 w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent" />
                     <div className="absolute inset-0 flex flex-col justify-between p-4 text-white">
                       <div>
-                        <span className="text-xs font-bold tracking-wider bg-primary/90 backdrop-blur-sm px-2 py-1 rounded-md inline-block">
+                        <span className="text-xs font-bold tracking-wider bg-primary/90 backdrop-blur-sm px-2 py-1 rounded-md inline-block" style={{ backgroundColor: '#C1FF72', color: '#000' }}>
                           {lens.name}
                         </span>
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold mb-2 drop-shadow-2xl" data-testid={`text-lens-name-${lens.id}`}>
+                        <h3 className="text-lg font-bold mb-3 drop-shadow-2xl leading-tight" data-testid={`text-lens-name-${lens.id}`}>
                           {lens.displayName}
                         </h3>
                         <div className="flex items-center justify-between">
@@ -102,6 +102,7 @@ function HomeContent() {
                   <Button
                     className="w-full"
                     onClick={() => handleLensClick(lens.id)}
+                    style={{ backgroundColor: '#C1FF72', color: '#000' }}
                     data-testid={`button-lens-${lens.id}`}
                   >
                     {hasLicense ? 'Use Filter' : 'Purchase'}
@@ -118,6 +119,8 @@ function HomeContent() {
           open={showPurchaseModal}
           onOpenChange={setShowPurchaseModal}
           lensId={selectedLensForPurchase}
+          price={mockLenses.find(l => l.id === selectedLensForPurchase)?.price || 0}
+          title={mockLenses.find(l => l.id === selectedLensForPurchase)?.displayName || 'AR Filter'}
           onPurchaseSuccess={() => {
             setShowPurchaseModal(false);
             setSelectedLensForPurchase(null);

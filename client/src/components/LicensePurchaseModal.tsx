@@ -13,6 +13,9 @@ interface LicensePurchaseModalProps {
   onOpenChange: (open: boolean) => void;
   onPurchaseSuccess?: () => void;
   gameId?: number;
+  lensId?: string;
+  price?: number;
+  title?: string;
 }
 
 export default function LicensePurchaseModal({
@@ -20,6 +23,9 @@ export default function LicensePurchaseModal({
   onOpenChange,
   onPurchaseSuccess,
   gameId = GAME_LICENSING_CONFIG.arLensesGameId,
+  lensId,
+  price = GAME_LICENSING_CONFIG.arLensesPrice,
+  title = 'AR Filter License',
 }: LicensePurchaseModalProps) {
   const { user } = usePrivy();
   const { toast } = useToast();
@@ -124,13 +130,14 @@ export default function LicensePurchaseModal({
 
       // Encode the function call
       const iface = new ethers.Interface(gameABI);
-      const data = iface.encodeFunctionData('purchaseLicense', [gameId]);
+      const licenseKey = lensId ? lensId : gameId;
+      const data = iface.encodeFunctionData('purchaseLicense', [licenseKey]);
       if (!data) {
         throw new Error('Failed to encode function');
       }
 
       // Parse value
-      const priceStr = String(GAME_LICENSING_CONFIG.arLensesPrice);
+      const priceStr = String(price);
       const valueInWei = ethers.parseEther(priceStr);
 
       // Build transaction with fixed gas params (standard values for contract call)
@@ -203,9 +210,9 @@ export default function LicensePurchaseModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md border-0 bg-black/95 backdrop-blur supports-[backdrop-filter]:bg-black/80">
         <DialogHeader>
-          <DialogTitle className="text-white text-2xl font-bold">AR Lenses License</DialogTitle>
+          <DialogTitle className="text-white text-2xl font-bold">{title}</DialogTitle>
           <DialogDescription className="text-gray-400">
-            Unlock stunning AR effects for a one-time payment
+            Unlock this AR effect for a one-time payment
           </DialogDescription>
         </DialogHeader>
 
@@ -215,7 +222,7 @@ export default function LicensePurchaseModal({
               <span className="text-sm font-medium text-gray-400">Price</span>
               <div className="text-right">
                 <span className="text-4xl font-bold" style={{ color: '#C1FF72' }}>
-                  {GAME_LICENSING_CONFIG.arLensesPrice}
+                  {price}
                 </span>
                 <span className="text-sm text-gray-400 ml-2">XRT</span>
               </div>
@@ -229,13 +236,13 @@ export default function LicensePurchaseModal({
             <h4 className="text-sm font-semibold text-white">What you get:</h4>
             <ul className="text-sm space-y-2">
               <li className="flex items-center gap-2 text-gray-300">
-                <span style={{ color: '#C1FF72' }}>✓</span> Unlimited access to all AR lenses
+                <span style={{ color: '#C1FF72' }}>✓</span> Unlimited use of this AR filter
               </li>
               <li className="flex items-center gap-2 text-gray-300">
                 <span style={{ color: '#C1FF72' }}>✓</span> Real-time AR effects on camera
               </li>
               <li className="flex items-center gap-2 text-gray-300">
-                <span style={{ color: '#C1FF72' }}>✓</span> Photo capture with AR filters
+                <span style={{ color: '#C1FF72' }}>✓</span> Photo capture with this filter
               </li>
               <li className="flex items-center gap-2 text-gray-300">
                 <span style={{ color: '#C1FF72' }}>✓</span> Permanent license (one-time)
@@ -246,7 +253,7 @@ export default function LicensePurchaseModal({
           <Button
             onClick={handlePurchase}
             disabled={loading}
-            className="w-full mt-6 bg-black text-black font-semibold hover:bg-opacity-90"
+            className="w-full mt-6 text-black font-semibold"
             style={{ backgroundColor: '#C1FF72' }}
             size="lg"
             data-testid="button-purchase-license"
@@ -257,7 +264,7 @@ export default function LicensePurchaseModal({
                 Processing...
               </>
             ) : (
-              `Purchase for ${GAME_LICENSING_CONFIG.arLensesPrice} XRT`
+              `Purchase for ${price} XRT`
             )}
           </Button>
         </div>

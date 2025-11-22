@@ -119,6 +119,8 @@ function CameraViewContent() {
             open={showLicenseModal}
             onOpenChange={setShowLicenseModal}
             lensId={lensId}
+            price={lens?.price || 0}
+            title={lens?.displayName || 'AR Filter'}
             onPurchaseSuccess={() => {
               toast({
                 title: 'Success!',
