@@ -26,6 +26,12 @@ export default function LicensePurchaseModal({
   const [loading, setLoading] = useState(false);
 
   const handlePurchase = async () => {
+    console.log('=== PURCHASE FLOW START ===');
+    console.log('User wallet:', user?.wallet?.address);
+    console.log('Game ID:', gameId);
+    console.log('Price:', GAME_LICENSING_CONFIG.arLensesPrice);
+    console.log('Contract address:', GAME_LICENSING_CONFIG.contractAddress);
+
     if (!user?.wallet?.address) {
       toast({
         title: 'Wallet not connected',
@@ -39,21 +45,24 @@ export default function LicensePurchaseModal({
       setLoading(true);
 
       const w = window as any;
+      console.log('Step 1: Checking Keplr...');
       
       if (!w.keplr) {
         throw new Error('Keplr wallet not found. Please install Keplr extension.');
       }
+      console.log('✓ Keplr found');
 
       // Get the EVM provider from Keplr
+      console.log('Step 2: Getting EVM provider...');
       let provider = w.keplr.providers?.eip155;
       if (!provider) {
-        // Try alternate path for newer Keplr versions
         provider = w.keplr.ethereum;
       }
       
       if (!provider) {
         throw new Error('Keplr EVM provider not available. Please upgrade Keplr.');
       }
+      console.log('✓ EVM provider obtained');
 
       toast({
         title: 'Requesting network switch...',
@@ -61,16 +70,21 @@ export default function LicensePurchaseModal({
       });
 
       // Request Keplr to switch to Saga network
+      console.log('Step 3: Requesting network switch...');
       const chainIdHex = `0x${SAGA_CHAIN_CONFIG.networkId.toString(16)}`;
+      console.log('Target chain ID (hex):', chainIdHex);
       
       try {
         await provider.request({
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: chainIdHex }],
         });
+        console.log('✓ Network switch successful');
       } catch (switchError: any) {
+        console.log('Network switch error code:', switchError.code);
         // If the chain doesn't exist, try to add it
         if (switchError.code === 4902) {
+          console.log('Chain not found, adding it...');
           try {
             await provider.request({
               method: 'wallet_addEthereumChain',
@@ -88,10 +102,13 @@ export default function LicensePurchaseModal({
                 },
               ],
             });
+            console.log('✓ Chain added successfully');
           } catch (addError) {
+            console.error('Failed to add chain:', addError);
             throw new Error('Failed to add Saga network to Keplr');
           }
         } else {
+          console.error('Switch error:', switchError);
           throw switchError;
         }
       }
@@ -102,16 +119,22 @@ export default function LicensePurchaseModal({
       });
 
       // Create ethers provider from Keplr
+      console.log('Step 4: Creating ethers provider...');
       const ethersProvider = new ethers.BrowserProvider(provider);
+      console.log('✓ Ethers provider created');
       
       // Get signer and validate
+      console.log('Step 5: Getting signer...');
       const signer = await ethersProvider.getSigner();
       if (!signer) {
         throw new Error('Failed to get signer from Keplr');
       }
+      console.log('✓ Signer obtained');
 
       // Get user address from signer
+      console.log('Step 6: Getting signer address...');
       const signerAddress = await signer.getAddress();
+      console.log('Signer address:', signerAddress);
       if (!signerAddress) {
         throw new Error('Failed to get address from signer');
       }
@@ -119,34 +142,54 @@ export default function LicensePurchaseModal({
       if (signerAddress.toLowerCase() !== user.wallet.address.toLowerCase()) {
         throw new Error(`Address mismatch: Keplr has ${signerAddress}, but app expects ${user.wallet.address}`);
       }
+      console.log('✓ Address matches');
 
-      // Verify we're on the right network (compare as strings to avoid BigInt precision issues)
+      // Verify we're on the right network
+      console.log('Step 7: Checking network...');
       const network = await ethersProvider.getNetwork();
+      console.log('Current chain ID:', network.chainId);
+      console.log('Expected chain ID:', SAGA_CHAIN_CONFIG.networkId);
       if (String(network.chainId) !== String(SAGA_CHAIN_CONFIG.networkId)) {
         throw new Error(
           `Wrong network detected: You're on chain ${network.chainId}, but should be on ${SAGA_CHAIN_CONFIG.networkId}.`
         );
       }
+      console.log('✓ Network correct');
 
       // Encode the function call
+      console.log('Step 8: Encoding function call...');
+      console.log('Game ID to encode:', gameId);
       const iface = new ethers.Interface(gameABI);
       const data = iface.encodeFunctionData('purchaseLicense', [gameId]);
+      console.log('Encoded data:', data);
       if (!data) {
         throw new Error('Failed to encode purchaseLicense function');
       }
+      console.log('✓ Function encoded');
 
-      // Parse the value properly - ensure it's a valid BigNumberish value
+      // Parse the value properly
+      console.log('Step 9: Parsing price value...');
       const priceStr = String(GAME_LICENSING_CONFIG.arLensesPrice);
+      console.log('Price string:', priceStr);
       let value: bigint;
       
       try {
         value = ethers.parseEther(priceStr);
+        console.log('Parsed value:', value.toString());
       } catch (e) {
         console.error('Failed to parse value:', priceStr, e);
         throw new Error(`Invalid price value: ${priceStr}. Expected a number.`);
       }
+      console.log('✓ Value parsed');
 
       // Send transaction
+      console.log('Step 10: Sending transaction...');
+      console.log('Transaction details:', {
+        to: GAME_LICENSING_CONFIG.contractAddress,
+        data: data,
+        value: value.toString(),
+      });
+      
       const txResponse = await signer.sendTransaction({
         to: GAME_LICENSING_CONFIG.contractAddress,
         data: data,
@@ -156,6 +199,7 @@ export default function LicensePurchaseModal({
       if (!txResponse || !txResponse.hash) {
         throw new Error('Transaction was not sent properly');
       }
+      console.log('✓ Transaction sent:', txResponse.hash);
 
       toast({
         title: 'Processing payment...',
@@ -163,15 +207,18 @@ export default function LicensePurchaseModal({
       });
 
       // Wait for receipt
+      console.log('Step 11: Waiting for receipt...');
       const receipt = await txResponse.wait(1);
 
       if (!receipt) {
         throw new Error('Transaction failed to confirm');
       }
+      console.log('✓ Receipt received:', receipt.hash);
 
       if (receipt.status === 0) {
         throw new Error('Transaction was reverted by the smart contract');
       }
+      console.log('✓ Transaction successful');
 
       toast({
         title: 'License purchased!',
@@ -181,7 +228,12 @@ export default function LicensePurchaseModal({
       onPurchaseSuccess?.();
       onOpenChange(false);
     } catch (err) {
-      console.error('Purchase error:', err);
+      console.error('=== PURCHASE FAILED ===');
+      console.error('Error:', err);
+      if (err instanceof Error) {
+        console.error('Error message:', err.message);
+        console.error('Stack:', err.stack);
+      }
 
       let errorMessage = 'An unexpected error occurred';
       
@@ -190,8 +242,6 @@ export default function LicensePurchaseModal({
           errorMessage = 'You cancelled the transaction';
         } else if (err.message.includes('insufficient funds')) {
           errorMessage = 'Insufficient XRT balance in your wallet';
-        } else if (err.message.includes('network') || err.message.includes('chain')) {
-          errorMessage = err.message;
         } else {
           errorMessage = err.message;
         }
