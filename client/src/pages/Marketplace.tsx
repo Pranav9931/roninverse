@@ -26,15 +26,15 @@ export interface Lens {
 }
 
 export const mockLenses: Lens[] = [
-  { id: '887d80da-f4ba-4a40-a0d6-4e4d0cfb31b1', name: 'Lens 1', displayName: 'Glowing Aura', coverImage: lens1Cover, groupId: 'b5551368-7881-4a23-a034-a0e757ec85a7' },
-  { id: '43276710876', name: 'Lens 2', displayName: 'Radiant Beauty', coverImage: lens2Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-  { id: '43276930875', name: 'Lens 3', displayName: 'Golden Hour', coverImage: lens3Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-  { id: '43281170875', name: 'Lens 4', displayName: 'Neon Glow', coverImage: lens4Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-  { id: '43288720877', name: 'Lens 5', displayName: 'Soft Focus', coverImage: lens5Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-  { id: '43288930875', name: 'Lens 6', displayName: 'Dreamy Vibes', coverImage: lens6Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-  { id: '43290810875', name: 'Lens 7', displayName: 'Natural Glow', coverImage: lens7Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-  { id: '43290830875', name: 'Lens 8', displayName: 'Ethereal Light', coverImage: lens8Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-  { id: '43293650876', name: 'Lens 9', displayName: 'Cyber Dreams', coverImage: lens9Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
+  { id: '887d80da-f4ba-4a40-a0d6-4e4d0cfb31b1', name: 'Lens 01', displayName: 'Glowing Aura', coverImage: lens1Cover, groupId: 'b5551368-7881-4a23-a034-a0e757ec85a7' },
+  { id: '43276710876', name: 'Lens 02', displayName: 'Radiant Beauty', coverImage: lens2Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
+  { id: '43276930875', name: 'Lens 03', displayName: 'Golden Hour', coverImage: lens3Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
+  { id: '43281170875', name: 'Lens 04', displayName: 'Neon Glow', coverImage: lens4Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
+  { id: '43288720877', name: 'Lens 05', displayName: 'Soft Focus', coverImage: lens5Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
+  { id: '43288930875', name: 'Lens 06', displayName: 'Dreamy Vibes', coverImage: lens6Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
+  { id: '43290810875', name: 'Lens 07', displayName: 'Natural Glow', coverImage: lens7Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
+  { id: '43290830875', name: 'Lens 08', displayName: 'Ethereal Light', coverImage: lens8Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
+  { id: '43293650876', name: 'Lens 09', displayName: 'Cyber Dreams', coverImage: lens9Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
   { id: '43294710875', name: 'Lens 10', displayName: 'Holographic', coverImage: lens10Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
   { id: '43296870875', name: 'Lens 11', displayName: 'Digital Art', coverImage: lens11Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
   { id: '43296900875', name: 'Lens 12', displayName: 'Neon Dreams', coverImage: lens12Cover, groupId: '2a385df2-4591-47df-9594-b273b456c862' },
@@ -68,7 +68,7 @@ function MarketplaceContent() {
           </Badge>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {mockLenses.map((lens) => (
             <Card
               key={lens.id}
@@ -77,22 +77,23 @@ function MarketplaceContent() {
               data-testid={`card-lens-${lens.id}`}
             >
               <CardContent className="p-0 relative">
-                <div className="aspect-[3/4] relative">
+                <div className="aspect-video relative">
                   <img
                     src={lens.coverImage}
                     alt={lens.displayName}
                     className="absolute inset-0 w-full h-full object-cover"
-                    style={{ filter: 'blur(8px)', transform: 'scale(1.1)' }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute inset-0 flex flex-col justify-end p-4 text-white">
-                    <p className="text-xs font-medium mb-1 bg-white/20 backdrop-blur-sm px-2 py-1 rounded-md inline-block self-start">
-                      {lens.name}
-                    </p>
-                    <h3 className="text-lg font-bold mb-1 drop-shadow-lg" data-testid={`text-lens-name-${lens.id}`}>
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent" />
+                  <div className="absolute inset-0 flex flex-col justify-end p-6 text-white">
+                    <div className="mb-2">
+                      <span className="text-sm font-bold tracking-wider bg-primary/90 backdrop-blur-sm px-3 py-1.5 rounded-md inline-block">
+                        {lens.name}
+                      </span>
+                    </div>
+                    <h3 className="text-2xl font-bold mb-2 drop-shadow-2xl" data-testid={`text-lens-name-${lens.id}`}>
                       {lens.displayName}
                     </h3>
-                    <p className="text-xs opacity-90">
+                    <p className="text-sm opacity-80 font-medium">
                       Tap to try
                     </p>
                   </div>
