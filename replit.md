@@ -2,7 +2,7 @@
 
 ## Overview
 
-o7.xr is a social camera application that integrates Snap Camera Kit to provide AR lens experiences. The application allows users to capture photos with AR filters, similar to popular social media camera features. Built with React and Express, it features a camera-first mobile interface with real-time lens preview and user authentication via Privy.
+o7.xr is a social camera application that integrates Snap Camera Kit to provide AR lens experiences. The application allows users to capture photos with AR filters, similar to popular social media camera features. Built with React and Express, it features a camera-first mobile interface with real-time lens preview, free AR lens selection, and user authentication via Privy.
 
 ## User Preferences
 
@@ -35,6 +35,13 @@ Preferred communication style: Simple, everyday language.
 - Custom hooks (`useCameraKit`) encapsulating complex camera logic
 - Context providers for global state (Privy authentication)
 - Query client for server-synchronized state
+
+**Key Features**
+- Free AR lens selection and application
+- Real-time camera preview with AR effects
+- Photo capture with AR filters applied
+- Lens marketplace browser
+- User profile with wallet management
 
 ### Backend Architecture
 
@@ -115,3 +122,13 @@ Preferred communication style: Simple, everyday language.
 - Active state scaling for tactile feedback
 - Instant visual feedback for all actions
 - Permission-based progressive enhancement
+
+## Recent Changes
+
+### November 22, 2025
+- Removed Fluent testnet integration
+- Removed x402 facilitator payment processing
+- Removed FLUID token balance checking
+- Simplified lens selection to be free and instant
+- Cleaned up wallet dialog to remove payment-related UI
+- Removed payment API endpoints from backend
