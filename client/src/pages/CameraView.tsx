@@ -1,36 +1,24 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import { useParams, useLocation } from 'wouter';
 import { useCameraKit } from '@/hooks/useCameraKit';
 import { usePrivy } from '@privy-io/react-auth';
 import CameraControls from '@/components/CameraControls';
-import LensCarousel, { Lens } from '@/components/LensCarousel';
 import PermissionScreen from '@/components/PermissionScreen';
 import PhotoPreview from '@/components/PhotoPreview';
 import AuthGuard from '@/components/AuthGuard';
-import { Loader2, LogOut, SwitchCamera } from 'lucide-react';
+import { mockLenses } from '@/pages/Marketplace';
+import { Loader2, LogOut, SwitchCamera, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-
-const mockLenses: Lens[] = [
-  { id: '887d80da-f4ba-4a40-a0d6-4e4d0cfb31b1', name: 'Lens 1', groupId: 'b5551368-7881-4a23-a034-a0e757ec85a7' },
-  { id: '43276710876', name: 'Lens 2', groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-  { id: '43276930875', name: 'Lens 3', groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-  { id: '43281170875', name: 'Lens 4', groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-  { id: '43288720877', name: 'Lens 5', groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-  { id: '43288930875', name: 'Lens 6', groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-  { id: '43290810875', name: 'Lens 7', groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-  { id: '43290830875', name: 'Lens 8', groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-  { id: '43293650876', name: 'Lens 9', groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-  { id: '43294710875', name: 'Lens 10', groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-  { id: '43296870875', name: 'Lens 11', groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-  { id: '43296900875', name: 'Lens 12', groupId: '2a385df2-4591-47df-9594-b273b456c862' },
-];
 
 function CameraViewContent() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [selectedLensId, setSelectedLensId] = useState<string | undefined>();
+  const { lensId } = useParams<{ lensId?: string }>();
+  const [, setLocation] = useLocation();
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
-  const { logout, user } = usePrivy();
+  const [lensApplied, setLensApplied] = useState(false);
+  const { logout } = usePrivy();
   const { toast } = useToast();
 
   const {
@@ -43,26 +31,32 @@ function CameraViewContent() {
     isFrontCamera
   } = useCameraKit(containerRef, canvasRef);
 
-  const handleLensSelect = async (lens: Lens) => {
-    console.log('Selecting lens:', lens.name, 'ID:', lens.id, 'Group ID:', lens.groupId);
-    
-    setSelectedLensId(lens.id);
-    
-    try {
-      await applyLens(lens.id, lens.groupId || null);
-      toast({
-        title: 'Lens applied',
-        description: `Successfully applied ${lens.name}`,
-      });
-    } catch (lensErr: any) {
-      console.error('Lens application failed:', lensErr);
-      toast({
-        title: 'Lens application failed',
-        description: lensErr.message || 'Unable to apply lens. Check console for details.',
-        variant: 'destructive',
-      });
+  useEffect(() => {
+    if (status === 'ready' && lensId && !lensApplied) {
+      const selectedLens = mockLenses.find(lens => lens.id === lensId);
+      
+      if (selectedLens) {
+        console.log('Auto-applying lens:', selectedLens.name, 'ID:', selectedLens.id);
+        
+        applyLens(selectedLens.id, selectedLens.groupId || null)
+          .then(() => {
+            setLensApplied(true);
+            toast({
+              title: 'Lens applied',
+              description: `${selectedLens.name} is ready`,
+            });
+          })
+          .catch((lensErr: any) => {
+            console.error('Lens application failed:', lensErr);
+            toast({
+              title: 'Lens application failed',
+              description: lensErr.message || 'Unable to apply lens',
+              variant: 'destructive',
+            });
+          });
+      }
     }
-  };
+  }, [status, lensId, lensApplied, applyLens, toast]);
 
   const handleCapture = async () => {
     console.log('Capturing photo...');
@@ -108,8 +102,19 @@ function CameraViewContent() {
 
       <div className="absolute inset-x-0 top-0 z-30 p-4">
         <div className="flex items-center justify-between">
-          <div className="text-white text-3xl font-bold" style={{ fontFamily: 'Lexlox, sans-serif', color: '#ffffff' }}>
-            o7
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setLocation('/')}
+              size="icon"
+              variant="ghost"
+              className="text-white hover:bg-white/10"
+              data-testid="button-back"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div className="text-white text-3xl font-bold" style={{ fontFamily: 'Lexlox, sans-serif', color: '#ffffff' }}>
+              o7
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-white/70 text-xs uppercase tracking-widest">
@@ -139,14 +144,6 @@ function CameraViewContent() {
 
       {status === 'ready' && (
         <>
-          <div className="absolute bottom-24 left-0 right-0 z-30">
-            <LensCarousel
-              lenses={mockLenses}
-              onLensSelect={handleLensSelect}
-              selectedLensId={selectedLensId}
-            />
-          </div>
-
           <div className="absolute right-6 top-1/2 -translate-y-1/2 z-30">
             <Button
               onClick={toggleCamera}
