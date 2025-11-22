@@ -79,7 +79,7 @@ function HomeContent() {
                 onClick={() => hasLicense && setLocation(`/camera/${lens.id}`)}
               >
                 {/* Image Section */}
-                <div className="relative h-80 overflow-hidden rounded-t-2xl">
+                <div className="relative h-56 overflow-hidden rounded-t-2xl">
                   <img
                     src={lens.coverImage}
                     alt={lens.displayName}
