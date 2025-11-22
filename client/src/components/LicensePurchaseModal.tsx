@@ -41,17 +41,18 @@ export default function LicensePurchaseModal({
       const w = window as any;
       
       if (!w.keplr) {
-        throw new Error('Keplr wallet not found');
+        throw new Error('Keplr wallet not found. Please install Keplr extension.');
       }
 
-      // Get provider from Keplr
+      // Get the EVM provider from Keplr
       let provider = w.keplr.providers?.eip155;
       if (!provider) {
+        // Try alternate path for newer Keplr versions
         provider = w.keplr.ethereum;
       }
       
       if (!provider) {
-        throw new Error('Keplr provider not available');
+        throw new Error('Keplr EVM provider not available. Please upgrade Keplr.');
       }
 
       toast({
@@ -59,54 +60,101 @@ export default function LicensePurchaseModal({
         description: 'Please approve the transaction in your Keplr wallet',
       });
 
-      // Use JSON-RPC provider for more direct control
-      const rpcProvider = new ethers.JsonRpcProvider(SAGA_CHAIN_CONFIG.rpcUrl);
+      // Create ethers provider from Keplr
       const ethersProvider = new ethers.BrowserProvider(provider);
-      const signer = await ethersProvider.getSigner();
       
-      const userAddress = await signer.getAddress();
-      if (userAddress.toLowerCase() !== user.wallet.address.toLowerCase()) {
-        throw new Error('Wallet address mismatch');
+      // Get signer and validate
+      const signer = await ethersProvider.getSigner();
+      if (!signer) {
+        throw new Error('Failed to get signer from Keplr');
       }
 
-      // Encode function call
+      // Get user address from signer
+      const signerAddress = await signer.getAddress();
+      if (!signerAddress) {
+        throw new Error('Failed to get address from signer');
+      }
+
+      if (signerAddress.toLowerCase() !== user.wallet.address.toLowerCase()) {
+        throw new Error(`Address mismatch: Keplr has ${signerAddress}, but app expects ${user.wallet.address}`);
+      }
+
+      // Encode the function call
       const iface = new ethers.Interface(gameABI);
       const data = iface.encodeFunctionData('purchaseLicense', [gameId]);
-      const value = ethers.parseEther(GAME_LICENSING_CONFIG.arLensesPrice);
+      if (!data) {
+        throw new Error('Failed to encode purchaseLicense function');
+      }
 
-      // Prepare and send transaction
+      // Parse the value properly - ensure it's a valid BigNumberish value
+      const priceStr = String(GAME_LICENSING_CONFIG.arLensesPrice);
+      let value: bigint;
+      
+      try {
+        value = ethers.parseEther(priceStr);
+      } catch (e) {
+        console.error('Failed to parse value:', priceStr, e);
+        throw new Error(`Invalid price value: ${priceStr}. Expected a number.`);
+      }
+
+      if (!value || value <= 0n) {
+        throw new Error(`Invalid value: ${value}`);
+      }
+
+      // Get current network
+      const network = await ethersProvider.getNetwork();
+      if (network.chainId !== SAGA_CHAIN_CONFIG.networkId) {
+        throw new Error(
+          `Wrong network: You're on chain ${network.chainId}, but should be on ${SAGA_CHAIN_CONFIG.networkId}. Please switch to Saga network in Keplr.`
+        );
+      }
+
+      // Send transaction
       const txResponse = await signer.sendTransaction({
         to: GAME_LICENSING_CONFIG.contractAddress,
         data: data,
         value: value,
       });
 
+      if (!txResponse || !txResponse.hash) {
+        throw new Error('Transaction was not sent properly');
+      }
+
       toast({
         title: 'Processing payment...',
-        description: 'Your transaction is being processed',
+        description: `Transaction hash: ${txResponse.hash.slice(0, 10)}...`,
       });
 
+      // Wait for receipt
       const receipt = await txResponse.wait(1);
 
       if (!receipt) {
-        throw new Error('Transaction failed');
+        throw new Error('Transaction failed to confirm');
+      }
+
+      if (receipt.status === 0) {
+        throw new Error('Transaction was reverted by the smart contract');
       }
 
       toast({
         title: 'License purchased!',
-        description: `You now have access to AR Lenses for ${GAME_LICENSING_CONFIG.arLensesPrice} XRT`,
+        description: `You now have access to AR Lenses. Transaction: ${receipt.hash.slice(0, 10)}...`,
       });
 
       onPurchaseSuccess?.();
       onOpenChange(false);
     } catch (err) {
-      console.error('Purchase failed:', err);
+      console.error('Purchase error:', err);
 
       let errorMessage = 'An unexpected error occurred';
       
       if (err instanceof Error) {
         if (err.message.includes('user rejected') || err.message.includes('User denied')) {
           errorMessage = 'You cancelled the transaction';
+        } else if (err.message.includes('insufficient funds')) {
+          errorMessage = 'Insufficient XRT balance in your wallet';
+        } else if (err.message.includes('network')) {
+          errorMessage = err.message;
         } else {
           errorMessage = err.message;
         }
@@ -172,6 +220,7 @@ export default function LicensePurchaseModal({
             className="w-full mt-6 bg-black text-black font-semibold hover:bg-opacity-90"
             style={{ backgroundColor: '#C1FF72' }}
             size="lg"
+            data-testid="button-purchase-license"
           >
             {loading ? (
               <>
