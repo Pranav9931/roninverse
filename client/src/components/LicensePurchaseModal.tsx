@@ -39,6 +39,8 @@ export default function LicensePurchaseModal({
   const [loading, setLoading] = useState(false);
 
   const handlePurchase = async () => {
+    console.log('🚀 Starting purchase flow...');
+    
     if (!user?.wallet?.address) {
       toast({
         title: 'Wallet not connected',
@@ -50,12 +52,14 @@ export default function LicensePurchaseModal({
 
     try {
       setLoading(true);
+      console.log('✓ User wallet address:', user.wallet.address);
 
       const w = window as any;
       
       if (!w.keplr) {
         throw new Error('Keplr wallet not found. Please install Keplr extension.');
       }
+      console.log('✓ Keplr detected');
 
       // Get the EVM provider from Keplr
       let provider = w.keplr.providers?.eip155;
@@ -66,6 +70,7 @@ export default function LicensePurchaseModal({
       if (!provider) {
         throw new Error('Keplr EVM provider not available. Please upgrade Keplr.');
       }
+      console.log('✓ Keplr EVM provider found');
 
       toast({
         title: 'Requesting network switch...',
@@ -74,14 +79,18 @@ export default function LicensePurchaseModal({
 
       // Request Keplr to switch to Saga network
       const chainIdHex = `0x${SAGA_CHAIN_CONFIG.networkId.toString(16)}`;
+      console.log('📡 Requesting chain switch to:', chainIdHex, '(', SAGA_CHAIN_CONFIG.networkId, ')');
       
       try {
         await provider.request({
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: chainIdHex }],
         });
+        console.log('✓ Network switched successfully');
       } catch (switchError: any) {
+        console.log('Network switch error:', switchError);
         if (switchError.code === 4902) {
+          console.log('Chain not found, adding it...');
           try {
             await provider.request({
               method: 'wallet_addEthereumChain',
@@ -99,7 +108,9 @@ export default function LicensePurchaseModal({
                 },
               ],
             });
+            console.log('✓ Chain added successfully');
           } catch (addError) {
+            console.error('Failed to add chain:', addError);
             throw new Error('Failed to add Saga network to Keplr');
           }
         } else {
@@ -108,39 +119,49 @@ export default function LicensePurchaseModal({
       }
 
       toast({
-        title: 'Awaiting wallet confirmation...',
-        description: 'Please approve the transaction in your Keplr wallet',
+        title: 'Preparing transaction...',
+        description: 'Checking your balance and preparing the purchase',
       });
 
       // Create ethers provider from Keplr
+      console.log('Creating ethers provider...');
       const ethersProvider = new ethers.BrowserProvider(provider);
+      console.log('Getting signer...');
       const signer = await ethersProvider.getSigner();
       
       if (!signer) {
         throw new Error('Failed to get signer from Keplr');
       }
+      console.log('✓ Signer obtained');
 
       const signerAddress = await signer.getAddress();
       if (!signerAddress) {
         throw new Error('Failed to get address from signer');
       }
+      console.log('✓ Signer address:', signerAddress);
 
       if (signerAddress.toLowerCase() !== user.wallet.address.toLowerCase()) {
-        throw new Error(`Address mismatch`);
+        throw new Error(`Address mismatch: Keplr=${signerAddress}, Privy=${user.wallet.address}`);
       }
 
       // Verify network
+      console.log('Verifying network...');
       const network = await ethersProvider.getNetwork();
+      console.log('Current network chainId:', network.chainId.toString());
+      console.log('Expected chainId:', SAGA_CHAIN_CONFIG.networkId);
+      
       if (String(network.chainId) !== String(SAGA_CHAIN_CONFIG.networkId)) {
-        throw new Error(`Wrong network: switch to Saga`);
+        throw new Error(`Wrong network: Connected to ${network.chainId}, need ${SAGA_CHAIN_CONFIG.networkId}`);
       }
+      console.log('✓ Network verified');
 
       // Check wallet balance
+      console.log('Checking balance...');
       const balance = await ethersProvider.getBalance(signerAddress);
       const balanceInXRT = ethers.formatEther(balance);
-      console.log('Wallet address:', signerAddress);
-      console.log('Balance in Wei:', balance.toString());
-      console.log('Balance in XRT:', balanceInXRT);
+      console.log('💰 Wallet address:', signerAddress);
+      console.log('💰 Balance in Wei:', balance.toString());
+      console.log('💰 Balance in XRT:', balanceInXRT);
 
       // Encode the function call
       const iface = new ethers.Interface(gameABI);
@@ -228,12 +249,18 @@ export default function LicensePurchaseModal({
       onPurchaseSuccess?.();
       onOpenChange(false);
     } catch (err) {
-      console.error('Purchase error:', err);
+      console.error('❌ Purchase error:', err);
+      console.error('Error type:', typeof err);
+      console.error('Error keys:', err ? Object.keys(err) : 'null');
+      console.error('Error JSON:', JSON.stringify(err, null, 2));
 
       let errorMessage = 'An unexpected error occurred';
       let errorTitle = 'Purchase failed';
       
       if (err instanceof Error) {
+        console.error('Error message:', err.message);
+        console.error('Error stack:', err.stack);
+        
         if (err.message.includes('user rejected') || err.message.includes('User Rejected')) {
           errorTitle = 'Transaction cancelled';
           errorMessage = 'You cancelled the transaction in your wallet';
@@ -245,6 +272,16 @@ export default function LicensePurchaseModal({
           errorMessage = 'Not enough XRT to cover the transaction cost and gas fees';
         } else {
           errorMessage = err.message;
+        }
+      } else if (err && typeof err === 'object') {
+        // Handle non-Error objects
+        const errObj = err as any;
+        if (errObj.message) {
+          errorMessage = errObj.message;
+        } else if (errObj.error && errObj.error.message) {
+          errorMessage = errObj.error.message;
+        } else {
+          errorMessage = 'Unknown error: ' + JSON.stringify(err);
         }
       }
 
