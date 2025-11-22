@@ -152,62 +152,43 @@ export default function LicensePurchaseModal({
       const iface = new ethers.Interface(gameABI);
       const data = iface.encodeFunctionData('purchaseLicense', [ethers.toBigInt(numericGameId)]);
       
-      console.log('Starting transaction send');
-      console.log('Encoded data:', data);
-      console.log('Signer:', signerAddress);
-      console.log('Value in wei:', valueInWei.toString());
-      
-      // Convert value to hex safely
-      let valueHex = '0x0';
-      if (valueInWei > 0n) {
-        valueHex = '0x' + valueInWei.toString(16);
-      }
+      // Convert BigInt to hex string
+      const valueHex = valueInWei === 0n ? '0x0' : '0x' + valueInWei.toString(16);
 
-      console.log('Value hex:', valueHex);
-
-      const txParams = {
-        from: signerAddress,
-        to: GAME_LICENSING_CONFIG.contractAddress,
-        data: data,
-        value: valueHex
-      };
-
-      console.log('Transaction params:', JSON.stringify(txParams));
-      
-      // Use raw JSON-RPC to completely bypass ethers.js response parsing
-      let txHash: string;
-      try {
-        console.log('About to call provider.request');
-        const result = await provider.request({
+      // Send transaction using Keplr's raw provider request
+      // IMPORTANT: Don't let ethers.js parse the response - that's what causes the BigNumberish error
+      const txHash = await new Promise<string>((resolve, reject) => {
+        provider.request({
           method: 'eth_sendTransaction',
-          params: [txParams]
-        });
+          params: [{
+            from: signerAddress,
+            to: GAME_LICENSING_CONFIG.contractAddress,
+            data: data,
+            value: valueHex
+          }]
+        }).then((result: any) => {
+          // result is the transaction hash string from Keplr
+          if (!result || typeof result !== 'string') {
+            reject(new Error('Invalid response from wallet'));
+            return;
+          }
+          resolve(result);
+        }).catch(reject);
+      });
 
-        console.log('Provider response received:', result);
-
-        // Result should be a string (the transaction hash)
-        // Don't try to parse or access properties - just use it directly
-        txHash = String(result).trim();
-        
-        if (!txHash || txHash === 'null' || txHash === 'undefined') {
-          throw new Error('No transaction hash returned from wallet');
-        }
-
-        console.log('Transaction hash:', txHash);
-
-        toast({
-          title: 'License purchased!',
-          description: `Transaction submitted`,
-        });
-
-        onPurchaseSuccess?.();
-        onOpenChange(false);
-      } catch (rpcError) {
-        console.error('Provider request error:', rpcError);
-        console.error('Error type:', typeof rpcError);
-        console.error('Error keys:', rpcError ? Object.keys(rpcError) : 'null');
-        throw rpcError;
+      if (!txHash) {
+        throw new Error('Transaction failed - no hash received');
       }
+
+      console.log('Transaction hash:', txHash);
+
+      toast({
+        title: 'License purchased!',
+        description: `Transaction submitted`,
+      });
+
+      onPurchaseSuccess?.();
+      onOpenChange(false);
     } catch (err) {
       console.error('Purchase error:', err);
 
