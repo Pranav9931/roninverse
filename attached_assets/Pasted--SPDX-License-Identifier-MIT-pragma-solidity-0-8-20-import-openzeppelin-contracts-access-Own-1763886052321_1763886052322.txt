@@ -1,0 +1,207 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
+contract GameLicensing is Ownable, ReentrancyGuard {
+    struct Game {
+        uint256 gameId;
+        string name;
+        string description;
+        address owner;
+        uint256 price;
+        bool isActive;
+        uint256 totalLicensesSold;
+    }
+
+    struct License {
+        uint256 gameId;
+        address user;
+        uint256 purchaseDate;
+        bool isActive;
+    }
+
+    uint256 private nextGameId = 1;
+    
+    mapping(uint256 => Game) public games;
+    mapping(uint256 => mapping(address => License)) public licenses;
+    mapping(address => uint256[]) public gamesByOwner;
+    mapping(address => uint256[]) public licensesByUser;
+
+    event GameListed(
+        uint256 indexed gameId,
+        string name,
+        address indexed owner,
+        uint256 price
+    );
+
+    event GameUpdated(
+        uint256 indexed gameId,
+        uint256 newPrice,
+        bool isActive
+    );
+
+    event LicensePurchased(
+        uint256 indexed gameId,
+        address indexed buyer,
+        uint256 price,
+        uint256 purchaseDate
+    );
+
+    event GameOwnershipTransferred(
+        uint256 indexed gameId,
+        address indexed previousOwner,
+        address indexed newOwner
+    );
+
+    constructor() Ownable(msg.sender) {}
+
+    function listGame(
+        string memory _name,
+        string memory _description,
+        uint256 _price
+    ) external returns (uint256) {
+        require(bytes(_name).length > 0, "Game name required");
+        require(_price > 0, "Price must be greater than 0");
+
+        uint256 gameId = nextGameId++;
+        
+        games[gameId] = Game({
+            gameId: gameId,
+            name: _name,
+            description: _description,
+            owner: msg.sender,
+            price: _price,
+            isActive: true,
+            totalLicensesSold: 0
+        });
+
+        gamesByOwner[msg.sender].push(gameId);
+
+        emit GameListed(gameId, _name, msg.sender, _price);
+
+        return gameId;
+    }
+
+    function updateGamePrice(uint256 _gameId, uint256 _newPrice) external {
+        require(games[_gameId].gameId != 0, "Game does not exist");
+        require(games[_gameId].owner == msg.sender, "Not the game owner");
+        require(_newPrice > 0, "Price must be greater than 0");
+
+        games[_gameId].price = _newPrice;
+
+        emit GameUpdated(_gameId, _newPrice, games[_gameId].isActive);
+    }
+
+    function setGameActiveStatus(uint256 _gameId, bool _isActive) external {
+        require(games[_gameId].gameId != 0, "Game does not exist");
+        require(games[_gameId].owner == msg.sender, "Not the game owner");
+
+        games[_gameId].isActive = _isActive;
+
+        emit GameUpdated(_gameId, games[_gameId].price, _isActive);
+    }
+
+    function purchaseLicense(uint256 _gameId) external payable nonReentrant {
+        require(games[_gameId].gameId != 0, "Game does not exist");
+        require(games[_gameId].isActive, "Game is not active");
+        require(
+            !licenses[_gameId][msg.sender].isActive,
+            "License already owned"
+        );
+
+        uint256 price = games[_gameId].price;
+        require(msg.value >= price, "Insufficient XRT payment");
+
+        address gameOwner = games[_gameId].owner;
+
+        licenses[_gameId][msg.sender] = License({
+            gameId: _gameId,
+            user: msg.sender,
+            purchaseDate: block.timestamp,
+            isActive: true
+        });
+
+        licensesByUser[msg.sender].push(_gameId);
+        games[_gameId].totalLicensesSold++;
+
+        (bool success, ) = payable(gameOwner).call{value: price}("");
+        require(success, "XRT transfer failed");
+
+        // Refund excess payment if any
+        if (msg.value > price) {
+            (bool refundSuccess, ) = payable(msg.sender).call{value: msg.value - price}("");
+            require(refundSuccess, "Refund failed");
+        }
+
+        emit LicensePurchased(_gameId, msg.sender, price, block.timestamp);
+    }
+
+    function hasLicense(uint256 _gameId, address _user) external view returns (bool) {
+        return licenses[_gameId][_user].isActive;
+    }
+
+    function getGame(uint256 _gameId) external view returns (
+        uint256 gameId,
+        string memory name,
+        string memory description,
+        address owner,
+        uint256 price,
+        bool isActive,
+        uint256 totalLicensesSold
+    ) {
+        Game memory game = games[_gameId];
+        require(game.gameId != 0, "Game does not exist");
+        
+        return (
+            game.gameId,
+            game.name,
+            game.description,
+            game.owner,
+            game.price,
+            game.isActive,
+            game.totalLicensesSold
+        );
+    }
+
+    function getLicense(uint256 _gameId, address _user) external view returns (
+        uint256 gameId,
+        address user,
+        uint256 purchaseDate,
+        bool isActive
+    ) {
+        License memory license = licenses[_gameId][_user];
+        require(license.isActive, "License does not exist");
+        
+        return (
+            license.gameId,
+            license.user,
+            license.purchaseDate,
+            license.isActive
+        );
+    }
+
+    function getGamesByOwner(address _owner) external view returns (uint256[] memory) {
+        return gamesByOwner[_owner];
+    }
+
+    function getLicensesByUser(address _user) external view returns (uint256[] memory) {
+        return licensesByUser[_user];
+    }
+
+    function transferGameOwnership(uint256 _gameId, address _newOwner) external {
+        require(games[_gameId].gameId != 0, "Game does not exist");
+        require(games[_gameId].owner == msg.sender, "Not the game owner");
+        require(_newOwner != address(0), "Invalid new owner address");
+
+        address previousOwner = games[_gameId].owner;
+        games[_gameId].owner = _newOwner;
+
+        gamesByOwner[_newOwner].push(_gameId);
+
+        emit GameOwnershipTransferred(_gameId, previousOwner, _newOwner);
+    }
+
+    receive() external payable {}
+}

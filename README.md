@@ -1,10 +1,14 @@
-# NeoSaga - AR Camera Experience
+# RoninVerse 🎮
+
+> Decentralized AR Lens & Game Marketplace on Ronin Saigon Testnet
 
 [![Built with Replit](https://img.shields.io/badge/Built%20with-Replit-orange)](https://replit.com)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18-61dafb)](https://reactjs.org/)
+![Ronin Saigon](https://img.shields.io/badge/Network-Ronin%20Saigon-87CEEB)
+![Solidity](https://img.shields.io/badge/Solidity-0.8.20-blue)
 
-NeoSaga is a next-generation AR gaming platform that combines Snap Camera Kit AR lenses with blockchain-powered game licensing. Experience immersive AR games directly in your browser, with secure ownership powered by Saga blockchain.
+RoninVerse is a blockchain-powered marketplace for AR lenses and WebXR games built on the Ronin Saigon testnet. Purchase, own, and experience immersive AR content with true digital ownership using the RON token.
 
 ## Features
 
@@ -20,16 +24,17 @@ NeoSaga is a next-generation AR gaming platform that combines Snap Camera Kit AR
 - **First Game**: "UEEAAUUEEAA" - An immersive WebXR experience
 
 ### Blockchain Integration
-- **Per-Game Licensing**: Own individual games via Saga blockchain smart contracts
-- **Secure Purchases**: Keplr wallet integration for safe transactions
-- **Your Library**: Track all owned games in one place
-- **License Verification**: Real-time ownership verification via smart contract
+- **Ronin Saigon Testnet**: Built on Ronin's high-performance blockchain
+- **Smart Contract**: GameLicensing contract at `0xe29Eb65EE3Dda606E9f2e0aD6D2D4f73AEF83846`
+- **Multi-Wallet Support**: Ronin Wallet, MetaMask, and Keplr compatibility
+- **RON Payments**: All purchases in RON tokens (0.1-0.3 RON)
+- **True Ownership**: On-chain license verification
 
 ### User Experience
 - **Privy Authentication**: Sign in with wallet, email, or Google
 - **Unified Interface**: All games (AR & WebXR) in one cohesive marketplace
 - **Responsive Design**: Seamless experience from mobile to desktop
-- **Dark Theme**: Easy on the eyes with #C1FF72 accent color
+- **Sky Blue Theme**: Beautiful modern UI with #87CEEB accent color
 
 ## Technology Stack
 
@@ -41,6 +46,11 @@ NeoSaga is a next-generation AR gaming platform that combines Snap Camera Kit AR
 - **Wouter** - Lightweight routing
 - **TanStack Query** - Server state management
 
+### Blockchain
+- **Ronin Saigon** - High-performance testnet (Chain ID: 2021)
+- **ethers.js v6** - Web3 blockchain interactions
+- **Smart Contracts** - Solidity 0.8.20 with OpenZeppelin
+
 ### AR & Gaming
 - **Snap Camera Kit** - Professional AR lens rendering
 - **WebXR** - Immersive browser-based games
@@ -48,29 +58,24 @@ NeoSaga is a next-generation AR gaming platform that combines Snap Camera Kit AR
 
 ### Backend
 - **Express.js** - RESTful API server
-- **PostgreSQL** - Neon serverless database
+- **PostgreSQL** - Neon serverless database (optional)
 - **Drizzle ORM** - Type-safe database queries
 - **Privy** - Web3 authentication
-
-### Blockchain
-- **Saga Chainlet** - OpenXR gaming-optimized chain
-- **Keplr Wallet** - EVM transaction signing
-- **ethers.js** - Blockchain interaction library
-- **GameLicensing Contract** - Smart contract at `0x91C7B6f8905060D6aE711878020DB15E90C697E0`
 
 ## Quick Start
 
 ### Prerequisites
 - Node.js 20.x or higher
-- npm or yarn
-- Keplr wallet browser extension (for game purchases)
+- npm or compatible package manager
+- Ronin Wallet, MetaMask, or Keplr (for purchases)
+- RON tokens on Ronin Saigon testnet
 
 ### Installation
 
 1. Clone the repository:
 ```bash
 git clone <your-repo-url>
-cd neosaga
+cd roninverse
 ```
 
 2. Install dependencies:
@@ -134,61 +139,99 @@ See [SETUP.md](./SETUP.md) for detailed Snap Camera Kit configuration.
 
 ## Blockchain Integration
 
-### Saga Chainlet Details
+### Ronin Saigon Testnet Details
 
-- **Chain**: Saga Chainlet (OpenXR)
-- **Chain ID**: `2763783314764000`
-- **RPC**: `https://openxr-2763783314764000-1.jsonrpc.sagarpc.io`
-- **Explorer**: `https://openxr-2763783314764000-1.sagaexplorer.io`
-- **Native Token**: XRT (18 decimals)
+- **Network**: Ronin Saigon Testnet
+- **Chain ID**: `2021` (0x7e5)
+- **RPC URL**: `https://saigon-testnet.roninchain.com/rpc`
+- **Block Explorer**: `https://saigon-app.roninchain.com`
+- **Native Token**: RON (18 decimals)
 
 ### GameLicensing Smart Contract
 
-- **Address**: `0x91C7B6f8905060D6aE711878020DB15E90C697E0`
-- **Game IDs**: 1-12 (AR Lenses), 13+ (WebXR Games)
-- **Price per AR Lens**: 2324 XRT
-- **Total for all AR Lenses**: 27,888 XRT
+- **Contract Address**: `0xe29Eb65EE3Dda606E9f2e0aD6D2D4f73AEF83846`
+- **Network**: Ronin Saigon Testnet
+- **License System**: On-chain purchase verification
+- **Pricing**: 0.1 - 0.3 RON per item
 
-### Purchasing Games
+**Item Catalog:**
+- **IDs 1-12**: AR Lenses (Cosmic Vibes through Laser Lights)
+- **ID 13+**: WebXR Games (UEEAAUUEEAA)
 
-1. Connect Keplr wallet
-2. Ensure you have XRT tokens in your wallet
-3. Browse games in the marketplace
-4. Click "Purchase" on desired game
-5. Approve transaction in Keplr
-6. Game unlocks immediately upon confirmation
+### Wallet Support
+
+RoninVerse supports multiple wallet providers:
+
+1. **Ronin Wallet** (Recommended)
+   - Native Ronin integration
+   - Optimized for Ronin Saigon
+
+2. **MetaMask**
+   - Automatic network addition
+   - Multi-provider support
+
+3. **Keplr**
+   - EVM provider compatibility
+
+### Purchasing Items
+
+1. **Connect Wallet**: Use Ronin Wallet, MetaMask, or Keplr
+2. **Get RON Tokens**: Ensure you have RON on Ronin Saigon testnet
+3. **Browse Marketplace**: View all available lenses and games
+4. **Purchase**: Click "Purchase" and approve the transaction
+5. **Instant Access**: Item unlocks immediately upon confirmation
 
 ### Contract Deployment
 
-If you're the contract owner and need to deploy games 2-12:
+To initialize all items on the smart contract:
 
 ```bash
-export PRIVATE_KEY="your_private_key"
-node scripts/deploy-games.js
+# Deploy all 13 items (12 lenses + 1 game)
+npx tsx deployGames.ts <PRIVATE_KEY>
 ```
 
-See [DEPLOYMENT_INSTRUCTIONS.md](./DEPLOYMENT_INSTRUCTIONS.md) for details.
+The deployment script creates all catalog items on-chain with their respective prices. See `deployGames.ts` for implementation details.
+
+## 💰 Pricing
+
+All items are priced in RON tokens on Ronin Saigon:
+
+**AR Lenses (IDs 1-12):**
+- Cosmic Vibes: 0.1 RON
+- Rainbow Blast: 0.12 RON
+- Pixel Paradise: 0.13 RON
+- Electric Dreams: 0.15 RON
+- Prism Party: 0.14 RON
+- Neon Nights: 0.16 RON
+- Retro Wave: 0.18 RON
+- Glitch Mode: 0.2 RON
+- Crystal Burst: 0.22 RON
+- Vapor Dreams: 0.25 RON
+- Cyber Glow: 0.28 RON
+- Laser Lights: 0.3 RON
+
+**WebXR Games (ID 13+):**
+- UEEAAUUEEAA: 0.25 RON
 
 ## Project Structure
 
 ```
-neosaga/
+roninverse/
 ├── client/                 # Frontend React application
 │   ├── src/
 │   │   ├── components/    # Reusable UI components
 │   │   ├── hooks/         # Custom React hooks
-│   │   ├── lib/           # Utilities and data
+│   │   ├── lib/           # Utilities, data, and configs
 │   │   ├── pages/         # Page components
 │   │   └── types/         # TypeScript types
 │   └── index.html
+├── contracts/             # Smart contracts
+│   └── GameLicensing.sol  # Main licensing contract
 ├── server/                # Express backend
 │   ├── routes.ts          # API endpoints
-│   ├── storage.ts         # Database operations
+│   ├── storage.ts         # Storage layer
 │   └── index.ts           # Server entry point
-├── shared/                # Shared types/schemas
-│   └── schema.ts          # Drizzle database schema
-├── scripts/               # Deployment scripts
-│   └── deploy-games.js    # Contract game deployment
+├── deployGames.ts         # Contract deployment script
 └── README.md
 ```
 
@@ -230,8 +273,8 @@ Each AR lens features unique visual effects:
 2. User browses game marketplace
 3. Unlicensed games show "Purchase" button
 4. Purchase flow:
-   - Connect Keplr wallet
-   - Approve transaction (2324 XRT for AR lenses, varies for WebXR)
+   - Connect wallet (Ronin Wallet, MetaMask, or Keplr)
+   - Approve transaction (0.1-0.3 RON per item)
    - Smart contract verifies payment
    - Game unlocks automatically
 5. Owned games appear in "Your Library"
@@ -253,15 +296,14 @@ Each AR lens features unique visual effects:
 ```typescript
 {
   id: 'lens-13',
-  name: '13',
-  displayName: 'Lens 13 - Your Name',
+  name: 'Lens 13',
+  displayName: 'Your Lens Name',
   groupId: 'your_group_id',
-  lensId: 'your_lens_id',
-  price: 2324,
+  price: 0.15,  // Price in RON
   coverImage: '/path/to/cover.jpg'
 }
 ```
-3. Deploy corresponding game to smart contract (game ID 13)
+3. Deploy corresponding item to smart contract via `deployGames.ts`
 
 ### Adding WebXR Games
 
@@ -270,14 +312,16 @@ Each AR lens features unique visual effects:
 ```typescript
 {
   id: 'game-your-slug',
+  name: 'YourGame',
   displayName: 'Your Game Name',
-  gameUrl: 'https://your-game-url.com',
-  price: 4540,
+  description: 'Game description',
+  url: 'https://your-game-url.com',
+  price: 0.25,  // Price in RON
   coverImage: '/path/to/cover.jpg',
   isMobileOnly: true
 }
 ```
-3. Deploy game to smart contract with appropriate game ID
+3. Deploy game to smart contract via `deployGames.ts`
 
 ## Troubleshooting
 
@@ -288,10 +332,11 @@ Each AR lens features unique visual effects:
 - Verify browser supports WebRTC
 
 ### Purchase fails
-- Ensure Keplr wallet is connected
-- Verify you're on Saga chain (chain ID: 2763783314764000)
-- Check XRT balance (need 2324+ XRT per AR lens)
-- Confirm gas fees (small amount of XRT)
+- Ensure wallet is connected (Ronin Wallet, MetaMask, or Keplr)
+- Verify you're on Ronin Saigon (chain ID: 2021)
+- Check RON balance (need 0.1-0.3 RON per item)
+- Confirm sufficient RON for gas fees
+- Check that the item exists on-chain (may need to deploy first)
 
 ### Lens not applying
 - Verify Snap Camera Kit API token is correct
@@ -322,13 +367,13 @@ Contributions are welcome! Please:
 4. Test thoroughly
 5. Submit a pull request
 
-## Support
+## Support & Documentation
 
-- Documentation: See `SETUP.md` and `DEPLOYMENT_INSTRUCTIONS.md`
-- Issues: Open a GitHub issue
-- Snap Camera Kit: [camera-kit.snapchat.com](https://camera-kit.snapchat.com/)
-- Privy: [docs.privy.io](https://docs.privy.io/)
-- Saga: [docs.saga.xyz](https://docs.saga.xyz/)
+- **Ronin Network**: [docs.roninchain.com](https://docs.roninchain.com/)
+- **Snap Camera Kit**: [camera-kit.snapchat.com](https://camera-kit.snapchat.com/)
+- **Privy**: [docs.privy.io](https://docs.privy.io/)
+- **ethers.js**: [docs.ethers.org/v6/](https://docs.ethers.org/v6/)
+- **Issues**: Open a GitHub issue
 
 ## License
 
@@ -336,12 +381,14 @@ MIT License - See LICENSE file for details
 
 ## Acknowledgments
 
-- Snap Camera Kit for AR technology
-- Privy for Web3 authentication
-- Saga for gaming-optimized blockchain
-- shadcn for beautiful UI components
-- Replit for seamless deployment
+- **Ronin Network** - High-performance blockchain infrastructure
+- **Snap Inc.** - Professional AR Camera Kit technology
+- **Privy** - Seamless Web3 authentication
+- **shadcn/ui** - Beautiful component library
+- **Replit** - Development and deployment platform
 
 ---
 
-**Built with passion for the future of AR gaming** 🎮✨
+**Built with ❤️ for the Ronin ecosystem**
+
+*RoninVerse - Where AR meets blockchain on Ronin Saigon* 🎮✨
