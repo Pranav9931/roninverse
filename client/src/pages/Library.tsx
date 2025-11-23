@@ -3,10 +3,12 @@ import { useLocation } from 'wouter';
 import AuthGuard from '@/components/AuthGuard';
 import { Button } from '@/components/ui/button';
 import { usePrivy } from '@privy-io/react-auth';
-import { LogOut, ArrowLeft, Check } from 'lucide-react';
+import { LogOut, ArrowLeft, Check, Gamepad2 } from 'lucide-react';
 import { useLicense } from '@/hooks/useLicense';
 import { mockLenses } from '@/lib/lensData';
+import { mockGames } from '@/lib/gameData';
 import { Lens } from '@/types/lens';
+import { Game } from '@/types/game';
 
 // Component to check individual lens ownership
 function LensOwnershipChecker({ lens, onOwned }: { lens: Lens; onOwned: (lens: Lens) => void }) {
@@ -21,10 +23,24 @@ function LensOwnershipChecker({ lens, onOwned }: { lens: Lens; onOwned: (lens: L
   return null;
 }
 
+// Component to check individual game ownership
+function GameOwnershipChecker({ game, onOwned }: { game: Game; onOwned: (game: Game) => void }) {
+  const { hasLicense, loading } = useLicense(game.id);
+  
+  useEffect(() => {
+    if (!loading && hasLicense) {
+      onOwned(game);
+    }
+  }, [hasLicense, loading, game, onOwned]);
+  
+  return null;
+}
+
 function LibraryContent() {
   const [, setLocation] = useLocation();
   const { logout } = usePrivy();
   const [ownedLenses, setOwnedLenses] = useState<Lens[]>([]);
+  const [ownedGames, setOwnedGames] = useState<Game[]>([]);
   const [checkComplete, setCheckComplete] = useState(false);
   
   // Track which lenses are owned
@@ -35,11 +51,21 @@ function LibraryContent() {
     });
   }, []);
   
+  // Track which games are owned
+  const handleGameOwned = useCallback((game: Game) => {
+    setOwnedGames(prev => {
+      if (prev.find(g => g.id === game.id)) return prev;
+      return [...prev, game];
+    });
+  }, []);
+  
   useEffect(() => {
     // Mark check as complete after a short delay
     const timer = setTimeout(() => setCheckComplete(true), 1000);
     return () => clearTimeout(timer);
   }, []);
+  
+  const totalOwned = ownedLenses.length + ownedGames.length;
 
   return (
     <div className="min-h-screen bg-background dark">
@@ -71,37 +97,50 @@ function LibraryContent() {
         </div>
       </header>
 
-      <main className="container px-4 py-8">
+      <main className="container px-4 py-8 space-y-12">
         {/* Hidden ownership checkers */}
         {mockLenses.map(lens => (
           <LensOwnershipChecker key={lens.id} lens={lens} onOwned={handleLensOwned} />
         ))}
+        {mockGames.map(game => (
+          <GameOwnershipChecker key={game.id} game={game} onOwned={handleGameOwned} />
+        ))}
         
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 text-white">My AR Filters</h1>
+          <h1 className="text-3xl font-bold mb-2 text-white">Your Library</h1>
           <p className="text-muted-foreground">
             {checkComplete ? (
-              `${ownedLenses.length} filter${ownedLenses.length !== 1 ? 's' : ''} in your collection`
+              `${totalOwned} item${totalOwned !== 1 ? 's' : ''} in your collection`
             ) : (
-              'Loading your filters...'
+              'Loading your library...'
             )}
           </p>
         </div>
 
-        {checkComplete && ownedLenses.length === 0 ? (
+        {checkComplete && totalOwned === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">
-            <p className="text-gray-400 text-lg mb-6">No filters owned yet</p>
+            <p className="text-gray-400 text-lg mb-6">No items owned yet</p>
             <Button
               onClick={() => setLocation('/')}
               style={{ backgroundColor: '#C1FF72', color: '#000' }}
               className="font-semibold"
             >
-              Browse Filters
+              Browse Marketplace
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-            {ownedLenses.map((lens) => (
+          <>
+            {/* AR Filters Section */}
+            {ownedLenses.length > 0 && (
+              <section>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-white">AR Filters</h2>
+                  <p className="text-muted-foreground text-sm">
+                    {ownedLenses.length} filter{ownedLenses.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {ownedLenses.map((lens) => (
               <div 
                 key={lens.id} 
                 className="group cursor-pointer bg-gray-900/50 rounded-2xl overflow-hidden border border-gray-800 hover:border-gray-700 transition-all duration-200 hover:scale-105"
@@ -165,8 +204,90 @@ function LibraryContent() {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Games Section */}
+            {ownedGames.length > 0 && (
+              <section>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-white">Games</h2>
+                  <p className="text-muted-foreground text-sm">
+                    {ownedGames.length} game{ownedGames.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {ownedGames.map((game) => (
+                    <div 
+                      key={game.id} 
+                      className="group cursor-pointer bg-gray-900/50 rounded-2xl overflow-hidden border border-gray-800 hover:border-gray-700 transition-all duration-200 hover:scale-105"
+                      data-testid={`card-library-game-${game.id}`}
+                      onClick={() => setLocation(`/game/${game.id}`)}
+                    >
+                      {/* Image Section */}
+                      <div className="relative h-56 overflow-hidden rounded-t-2xl">
+                        <img
+                          src={game.coverImage}
+                          alt={game.displayName}
+                          className="w-full h-full object-cover"
+                        />
+                        
+                        {/* Hover Overlay with Button */}
+                        <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                          <Button
+                            className="font-semibold"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLocation(`/game/${game.id}`);
+                            }}
+                            style={{ backgroundColor: '#C1FF72', color: '#000' }}
+                            data-testid={`button-library-play-${game.id}`}
+                          >
+                            Play Game
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Content Section */}
+                      <div className="p-5 space-y-4">
+                        {/* Title */}
+                        <h3 
+                          className="text-xl font-bold text-white leading-tight" 
+                          data-testid={`text-library-game-${game.id}`}
+                        >
+                          {game.displayName}
+                        </h3>
+
+                        {/* Game Type with Badge */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-400">WebXR Game</span>
+                          <div className="h-8 w-8 rounded-full border-2 flex items-center justify-center" style={{ borderColor: '#C1FF72' }}>
+                            <Check className="w-4 h-4" style={{ color: '#C1FF72' }} />
+                          </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="h-px bg-gray-800"></div>
+
+                        {/* Status Section */}
+                        <div className="space-y-2">
+                          <span className="text-xs text-gray-500 uppercase tracking-widest font-semibold block">Status</span>
+                          <div className="flex items-center gap-2">
+                            <Check className="w-4 h-4" style={{ color: '#C1FF72' }} />
+                            <span className="text-base font-bold" style={{ color: '#C1FF72' }}>
+                              Owned
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
         )}
       </main>
     </div>
