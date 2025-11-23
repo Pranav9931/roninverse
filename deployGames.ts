@@ -1,10 +1,13 @@
 import { ethers } from 'ethers';
-import * as fs from 'fs';
-import * as path from 'path';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
 // Import ABI and config
-const abiPath = path.join(__dirname, 'client/src/lib/gameABI.json');
-const gameABI = JSON.parse(fs.readFileSync(abiPath, 'utf-8'));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const abiPath = join(__dirname, 'client/src/lib/gameABI.json');
+const gameABI = JSON.parse(readFileSync(abiPath, 'utf-8'));
 
 const RONIN_SAIGON_RPC = 'https://saigon-testnet.roninchain.com/rpc';
 const CONTRACT_ADDRESS = '0xe29Eb65EE3Dda606E9f2e0aD6D2D4f73AEF83846';
