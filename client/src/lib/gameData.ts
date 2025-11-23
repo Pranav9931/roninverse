@@ -10,7 +10,7 @@ export const mockGames: Game[] = [
     price: 4540,
     coverImage: gameCover,
     url: 'https://alivestudios.8thwall.app/neworldeffects/',
-    isMobileOnly: true,
+    isMobileOnly: false,
   },
 ];
 
