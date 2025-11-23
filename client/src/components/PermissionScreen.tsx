@@ -21,7 +21,7 @@ export default function PermissionScreen({ onRequestPermission, error }: Permiss
             Camera Access Required
           </h1>
           <p className="text-muted-foreground">
-            NeoSaga needs access to your camera to apply AR lenses and capture photos.
+            RoninVerse needs access to your camera to apply AR lenses and capture photos.
           </p>
         </div>
 
