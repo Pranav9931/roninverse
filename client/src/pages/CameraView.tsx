@@ -93,7 +93,7 @@ function CameraViewContent() {
           </div>
 
           <div className="bg-primary/20 border border-primary rounded-lg p-6">
-            <div className="text-5xl font-bold text-primary mb-2">{lens?.price || 0} XRT</div>
+            <div className="text-5xl font-bold text-primary mb-2">{lens?.price || 0} RON</div>
             <p className="text-sm text-gray-300">One-time payment for lifetime access</p>
           </div>
 

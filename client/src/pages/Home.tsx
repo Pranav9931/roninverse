@@ -80,9 +80,9 @@ function GameItemCard({
         {/* Game Type with Badge */}
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-400">{typeLabel}</span>
-          <div className="h-8 w-8 rounded-full border-2 flex items-center justify-center" style={{ borderColor: hasLicense ? '#C1FF72' : '#4b5563' }}>
+          <div className="h-8 w-8 rounded-full border-2 flex items-center justify-center" style={{ borderColor: hasLicense ? '#87CEEB' : '#4b5563' }}>
             {hasLicense ? (
-              <Check className="w-4 h-4" style={{ color: '#C1FF72' }} />
+              <Check className="w-4 h-4" style={{ color: '#87CEEB' }} />
             ) : (
               icon
             )}
@@ -96,9 +96,9 @@ function GameItemCard({
         <div className="space-y-2">
           <span className="text-xs text-gray-500 uppercase tracking-widest font-semibold block">Price</span>
           <div className="flex items-center gap-2">
-            {hasLicense && <Check className="w-4 h-4" style={{ color: '#C1FF72' }} />}
-            <span className="text-base font-bold" style={{ color: '#C1FF72' }}>
-              {hasLicense ? 'Owned' : `${item.price} XRT`}
+            {hasLicense && <Check className="w-4 h-4" style={{ color: '#87CEEB' }} />}
+            <span className="text-base font-bold" style={{ color: '#87CEEB' }}>
+              {hasLicense ? 'Owned' : `${item.price} RON`}
             </span>
           </div>
         </div>
@@ -111,7 +111,7 @@ function GameItemCard({
               e.stopPropagation();
               handleAction();
             }}
-            style={{ backgroundColor: '#C1FF72', color: '#000' }}
+            style={{ backgroundColor: '#87CEEB', color: '#000' }}
             data-testid={`button-${itemType}-${item.id}`}
             disabled={loading}
           >
@@ -150,7 +150,7 @@ function HomeContent() {
     <div className="min-h-screen bg-background dark">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:bg-background/95 dark:supports-[backdrop-filter]:dark:bg-background/60">
         <div className="flex h-16 items-center justify-between gap-4 px-4">
-          <div className="text-2xl font-bold" style={{ fontFamily: 'Lexlox, sans-serif', color: '#C1FF72' }}>
+          <div className="text-2xl font-bold" style={{ fontFamily: 'Lexlox, sans-serif', color: '#87CEEB' }}>
             NeoSaga
           </div>
           <div className="flex items-center gap-3">

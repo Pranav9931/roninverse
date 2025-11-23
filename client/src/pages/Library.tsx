@@ -52,11 +52,11 @@ function LibraryGameItemCard({
 
   const typeLabel = itemType === 'lens' ? 'AR Game' : 'WebXR Game';
   const icon = itemType === 'lens' && 'name' in item ? (
-    <span className="text-xs font-bold" style={{ color: '#C1FF72' }}>
+    <span className="text-xs font-bold" style={{ color: '#87CEEB' }}>
       {item.name.slice(0, 1)}
     </span>
   ) : (
-    <Gamepad2 className="w-4 h-4" style={{ color: '#C1FF72' }} />
+    <Gamepad2 className="w-4 h-4" style={{ color: '#87CEEB' }} />
   );
 
   return (
@@ -88,7 +88,7 @@ function LibraryGameItemCard({
         {/* Game Type with Badge */}
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-400">{typeLabel}</span>
-          <div className="h-8 w-8 rounded-full border-2 flex items-center justify-center" style={{ borderColor: '#C1FF72' }}>
+          <div className="h-8 w-8 rounded-full border-2 flex items-center justify-center" style={{ borderColor: '#87CEEB' }}>
             {icon}
           </div>
         </div>
@@ -100,8 +100,8 @@ function LibraryGameItemCard({
         <div className="space-y-2">
           <span className="text-xs text-gray-500 uppercase tracking-widest font-semibold block">Status</span>
           <div className="flex items-center gap-2">
-            <Check className="w-4 h-4" style={{ color: '#C1FF72' }} />
-            <span className="text-base font-bold" style={{ color: '#C1FF72' }}>
+            <Check className="w-4 h-4" style={{ color: '#87CEEB' }} />
+            <span className="text-base font-bold" style={{ color: '#87CEEB' }}>
               Owned
             </span>
           </div>
@@ -115,7 +115,7 @@ function LibraryGameItemCard({
               e.stopPropagation();
               handlePlay();
             }}
-            style={{ backgroundColor: '#C1FF72', color: '#000' }}
+            style={{ backgroundColor: '#87CEEB', color: '#000' }}
             data-testid={`button-library-use-${item.id}`}
           >
             Play Game
@@ -171,7 +171,7 @@ function LibraryContent() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div className="text-2xl font-bold" style={{ fontFamily: 'Lexlox, sans-serif', color: '#C1FF72' }}>
+            <div className="text-2xl font-bold" style={{ fontFamily: 'Lexlox, sans-serif', color: '#87CEEB' }}>
               Your Library
             </div>
           </div>
@@ -212,7 +212,7 @@ function LibraryContent() {
             <p className="text-gray-400 text-lg mb-6">No games owned yet</p>
             <Button
               onClick={() => setLocation('/')}
-              style={{ backgroundColor: '#C1FF72', color: '#000' }}
+              style={{ backgroundColor: '#87CEEB', color: '#000' }}
               className="font-semibold"
             >
               Browse Games

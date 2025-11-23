@@ -47,7 +47,7 @@ function GamePlayerContent() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="max-w-md mx-auto px-4 text-center space-y-6">
-          <Smartphone className="w-24 h-24 mx-auto" style={{ color: '#C1FF72' }} />
+          <Smartphone className="w-24 h-24 mx-auto" style={{ color: '#87CEEB' }} />
           <h1 className="text-3xl font-bold text-white">Mobile Only</h1>
           <p className="text-gray-300">
             This AR game is designed for mobile devices. Please open this page on your smartphone to play.
@@ -55,7 +55,7 @@ function GamePlayerContent() {
           <Button 
             onClick={() => setLocation('/')} 
             data-testid="button-back-home"
-            style={{ backgroundColor: '#C1FF72', color: '#000' }}
+            style={{ backgroundColor: '#87CEEB', color: '#000' }}
           >
             Back to Home
           </Button>
@@ -77,8 +77,8 @@ function GamePlayerContent() {
           <div className="bg-gray-900/80 backdrop-blur-lg rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Price:</span>
-              <span className="text-2xl font-bold" style={{ color: '#C1FF72' }}>
-                {game.price} XRT
+              <span className="text-2xl font-bold" style={{ color: '#87CEEB' }}>
+                {game.price} RON
               </span>
             </div>
           </div>
@@ -88,7 +88,7 @@ function GamePlayerContent() {
               onClick={() => setShowLicenseModal(true)}
               className="w-full font-semibold"
               size="lg"
-              style={{ backgroundColor: '#C1FF72', color: '#000' }}
+              style={{ backgroundColor: '#87CEEB', color: '#000' }}
               data-testid="button-purchase-game"
             >
               Purchase Game
@@ -128,7 +128,7 @@ function GamePlayerContent() {
     return (
       <div className="fixed inset-0 bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 mx-auto mb-4" style={{ borderColor: '#C1FF72' }}></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 mx-auto mb-4" style={{ borderColor: '#87CEEB' }}></div>
           <p className="text-gray-400">Checking access...</p>
         </div>
       </div>

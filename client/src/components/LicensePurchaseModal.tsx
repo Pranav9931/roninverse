@@ -68,28 +68,201 @@ export default function LicensePurchaseModal({
 
       const w = window as any;
       
-      if (!w.keplr) {
-        throw new Error('Keplr wallet not found. Please install Keplr extension.');
-      }
-      console.log('[OK] Keplr detected');
+      // Robust provider detection and normalization with deep unwrapping
+      const normalizeProvider = async (obj: any, maxRetries = 2): Promise<any> => {
+        if (!obj) return null;
+        
+        // Deep unwrapping helper - checks all common nested structures
+        const deepUnwrap = (target: any): any => {
+          if (!target) return null;
+          if (typeof target.request === 'function') return target;
+          
+          // Check common nesting patterns
+          const paths = ['provider', 'ethereum', 'wallet', 'result'];
+          for (const path of paths) {
+            if (target[path] && typeof target[path].request === 'function') {
+              return target[path];
+            }
+            if (target[path] && typeof target[path] === 'object') {
+              const nested = deepUnwrap(target[path]);
+              if (nested) return nested;
+            }
+          }
+          return null;
+        };
+        
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+          // Try deep unwrapping first
+          const unwrapped = deepUnwrap(obj);
+          if (unwrapped) return unwrapped;
+          
+          // Try explicit connect() for wallets that need it
+          if (typeof obj.connect === 'function') {
+            try {
+              console.log(`[PROVIDER] Attempt ${attempt + 1}: Calling connect()...`);
+              const connected = await obj.connect();
+              
+              // Deep unwrap the connect result
+              const connectedProvider = deepUnwrap(connected || obj);
+              if (connectedProvider) return connectedProvider;
+              
+              // Small delay to allow async state mutations
+              await new Promise(resolve => setTimeout(resolve, 200));
+              
+              // Check again after delay
+              const delayed = deepUnwrap(obj);
+              if (delayed) return delayed;
+              
+            } catch (err: any) {
+              console.warn(`[PROVIDER] Connect attempt ${attempt + 1} failed:`, err?.message || err);
+              if (attempt < maxRetries - 1) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+              }
+            }
+          } else {
+            break; // No connect method, no point retrying
+          }
+        }
+        
+        return null;
+      };
 
-      // Get the EVM provider from Keplr
-      let provider = w.keplr.providers?.eip155;
-      if (!provider) {
-        provider = w.keplr.ethereum;
+      let provider;
+      let walletName = '';
+      
+      // 1. Check for Ronin Wallet (highest priority for Ronin chain)
+      if (w.ronin) {
+        try {
+          provider = await normalizeProvider(w.ronin);
+          if (provider) {
+            walletName = 'Ronin Wallet';
+            console.log('[OK] Ronin Wallet detected and normalized');
+          }
+        } catch (err) {
+          console.warn('[RONIN] Normalization failed:', err);
+        }
       }
       
-      if (!provider) {
-        throw new Error('Keplr EVM provider not available. Please upgrade Keplr.');
+      // 2. Check window.ethereum (MetaMask, injected wallets)
+      if (!provider && w.ethereum) {
+        // Handle multiple providers array - iterate until we find a valid one
+        if (Array.isArray(w.ethereum.providers) && w.ethereum.providers.length > 0) {
+          console.log(`[PROVIDER] Checking ${w.ethereum.providers.length} providers...`);
+          
+          // Try Ronin first if available in array
+          const roninProvider = w.ethereum.providers.find((p: any) => p.isRonin || p.isRoninWallet);
+          if (roninProvider) {
+            try {
+              provider = await normalizeProvider(roninProvider);
+              if (provider) walletName = 'Ronin Wallet';
+            } catch (err) {
+              console.warn('[RONIN-ARRAY] Normalization failed:', err);
+            }
+          }
+          
+          // If not found, try all providers in order with error handling
+          if (!provider) {
+            for (let i = 0; i < w.ethereum.providers.length; i++) {
+              let currentProvider = null; // Reset for each iteration
+              try {
+                const p = w.ethereum.providers[i];
+                console.log(`[PROVIDER] Trying provider ${i + 1}/${w.ethereum.providers.length}...`);
+                currentProvider = await normalizeProvider(p);
+                if (currentProvider && typeof currentProvider.request === 'function') {
+                  provider = currentProvider;
+                  walletName = 'Ethereum Wallet';
+                  console.log(`[OK] Provider ${i + 1} normalized successfully`);
+                  break;
+                }
+              } catch (err) {
+                console.warn(`[PROVIDER] Provider ${i + 1} failed:`, err);
+                // Continue to next provider
+              }
+            }
+          }
+        } else {
+          try {
+            provider = await normalizeProvider(w.ethereum);
+            if (provider) walletName = 'Ethereum Wallet';
+          } catch (err) {
+            console.warn('[ETHEREUM] Normalization failed:', err);
+          }
+        }
+        
+        if (provider) {
+          console.log(`[OK] ${walletName} detected and normalized`);
+        }
       }
-      console.log('[OK] Keplr EVM provider found');
+      
+      // 3. Fallback to Keplr
+      if (!provider && (w.keplr?.ethereum || w.keplr?.providers?.eip155)) {
+        try {
+          provider = await normalizeProvider(w.keplr.ethereum || w.keplr.providers.eip155);
+          if (provider) {
+            walletName = 'Keplr';
+            console.log('[OK] Keplr EVM provider detected and normalized');
+          }
+        } catch (err) {
+          console.warn('[KEPLR] Normalization failed:', err);
+        }
+      }
+      
+      // Final validation
+      if (!provider || typeof provider.request !== 'function') {
+        console.error('No valid provider found. window.ronin:', !!w.ronin, 'window.ethereum:', !!w.ethereum, 'window.keplr:', !!w.keplr);
+        throw new Error('No compatible wallet found. Please install Ronin Wallet, MetaMask, or Keplr extension, ensure it is unlocked, and try again.');
+      }
+
+      console.log(`[OK] Using ${walletName} provider`);
+
+      // Request account access with retry for "already pending" errors
+      let accounts;
+      const maxAccountRetries = 3;
+      
+      for (let attempt = 0; attempt < maxAccountRetries; attempt++) {
+        try {
+          console.log(`[ACCOUNTS] Requesting account access (attempt ${attempt + 1}/${maxAccountRetries})...`);
+          accounts = await provider.request({ method: 'eth_requestAccounts' });
+          console.log('[OK] Account access granted, accounts:', accounts);
+          break; // Success, exit retry loop
+        } catch (error: any) {
+          const errorMsg = error?.message?.toLowerCase() || '';
+          const isAlreadyPending = errorMsg.includes('already pending') || errorMsg.includes('request of type');
+          
+          if (isAlreadyPending && attempt < maxAccountRetries - 1) {
+            console.warn(`[ACCOUNTS] Request already pending, waiting before retry...`);
+            toast({
+              title: 'Waiting for wallet...',
+              description: 'Please check your wallet for a pending connection request',
+            });
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
+            continue;
+          }
+          
+          console.error('Failed to request accounts:', error);
+          if (errorMsg.includes('wallet mismatch')) {
+            throw error; // Re-throw wallet mismatch error
+          }
+          throw new Error(`Failed to access ${walletName}. Please approve the connection request in your wallet.`);
+        }
+      }
+      
+      // Verify the wallet account matches the Privy connected wallet
+      if (accounts && accounts.length > 0) {
+        const walletAccount = accounts[0].toLowerCase();
+        if (walletAccount !== user.wallet.address.toLowerCase()) {
+          throw new Error(`Wallet mismatch: Please connect ${walletName} to the same address as your Privy wallet (${user.wallet.address})`);
+        }
+      } else {
+        throw new Error(`No accounts returned from ${walletName}. Please ensure your wallet is unlocked.`);
+      }
 
       toast({
         title: 'Requesting network switch...',
-        description: 'Please approve switching to Saga network in your Keplr wallet',
+        description: 'Please approve switching to Ronin Saigon network in your wallet',
       });
 
-      // Request Keplr to switch to Saga network
+      // Request wallet to switch to Ronin Saigon network
       const chainIdHex = `0x${SAGA_CHAIN_CONFIG.networkId.toString(16)}`;
       console.log('[NETWORK] Requesting chain switch to:', chainIdHex, '(', SAGA_CHAIN_CONFIG.networkId, ')');
       
@@ -109,11 +282,11 @@ export default function LicensePurchaseModal({
               params: [
                 {
                   chainId: chainIdHex,
-                  chainName: 'Saga - openxr',
+                  chainName: 'Ronin Saigon Testnet',
                   rpcUrls: [SAGA_CHAIN_CONFIG.rpcUrl],
                   nativeCurrency: {
-                    name: 'XRT',
-                    symbol: 'XRT',
+                    name: 'RON',
+                    symbol: 'RON',
                     decimals: 18,
                   },
                   blockExplorerUrls: [SAGA_CHAIN_CONFIG.blockExplorer],
@@ -123,7 +296,7 @@ export default function LicensePurchaseModal({
             console.log('[OK] Chain added successfully');
           } catch (addError) {
             console.error('Failed to add chain:', addError);
-            throw new Error('Failed to add Saga network to Keplr');
+            throw new Error('Failed to add Ronin Saigon network to wallet');
           }
         } else {
           throw switchError;
@@ -135,14 +308,14 @@ export default function LicensePurchaseModal({
         description: 'Checking your balance and preparing the purchase',
       });
 
-      // Create ethers provider from Keplr
+      // Create ethers provider from wallet
       console.log('Creating ethers provider...');
       const ethersProvider = new ethers.BrowserProvider(provider);
       console.log('Getting signer...');
       const signer = await ethersProvider.getSigner();
       
       if (!signer) {
-        throw new Error('Failed to get signer from Keplr');
+        throw new Error('Failed to get signer from wallet');
       }
       console.log('[OK] Signer obtained');
 
@@ -153,7 +326,7 @@ export default function LicensePurchaseModal({
       console.log('[OK] Signer address:', signerAddress);
 
       if (signerAddress.toLowerCase() !== user.wallet.address.toLowerCase()) {
-        throw new Error(`Address mismatch: Keplr=${signerAddress}, Privy=${user.wallet.address}`);
+        throw new Error(`Address mismatch: Wallet=${signerAddress}, Privy=${user.wallet.address}`);
       }
 
       // Verify network
@@ -170,10 +343,10 @@ export default function LicensePurchaseModal({
       // Check wallet balance
       console.log('Checking balance...');
       const balance = await ethersProvider.getBalance(signerAddress);
-      const balanceInXRT = ethers.formatEther(balance);
+      const balanceInRON = ethers.formatEther(balance);
       console.log('[WALLET] Wallet address:', signerAddress);
       console.log('[WALLET] Balance in Wei:', balance.toString());
-      console.log('[WALLET] Balance in XRT:', balanceInXRT);
+      console.log('[WALLET] Balance in RON:', balanceInRON);
 
       // Convert itemId (lens or game) to numeric gameId (required parameter)
       if (!lensId) {
@@ -183,7 +356,7 @@ export default function LicensePurchaseModal({
       
       console.log('Purchasing license for lensId:', lensId, 'gameId:', numericGameId);
 
-      // Parse price in Wei - user provides price in XRT tokens
+      // Parse price in Wei - user provides price in RON tokens
       const priceStr = String(price);
       const valueInWei = ethers.parseEther(priceStr);
       
@@ -192,19 +365,19 @@ export default function LicensePurchaseModal({
       const gasPrice = ethers.toBigInt('1000000000'); // 1 gwei
       const gasCost = ethers.toBigInt(gasLimit) * gasPrice;
       const totalCost = valueInWei + gasCost;
-      const totalCostInXRT = ethers.formatEther(totalCost);
+      const totalCostInRON = ethers.formatEther(totalCost);
       
-      console.log('Price in XRT:', priceStr);
+      console.log('Price in RON:', priceStr);
       console.log('Value in Wei:', valueInWei.toString());
       console.log('Gas cost in Wei:', gasCost.toString());
-      console.log('Gas cost in XRT:', ethers.formatEther(gasCost));
-      console.log('Total cost in XRT:', totalCostInXRT);
+      console.log('Gas cost in RON:', ethers.formatEther(gasCost));
+      console.log('Total cost in RON:', totalCostInRON);
 
       // Check if balance is sufficient
       if (balance < totalCost) {
         const shortfall = ethers.formatEther(totalCost - balance);
         throw new Error(
-          `Insufficient balance. You have ${balanceInXRT} XRT but need ${totalCostInXRT} XRT (${priceStr} for purchase + ${ethers.formatEther(gasCost)} for gas). You need ${shortfall} more XRT.`
+          `Insufficient balance. You have ${balanceInRON} RON but need ${totalCostInRON} RON (${priceStr} for purchase + ${ethers.formatEther(gasCost)} for gas). You need ${shortfall} more RON.`
         );
       }
 
@@ -217,7 +390,7 @@ export default function LicensePurchaseModal({
 
       console.log('Calling purchaseLicense on contract...');
       console.log('GameId:', numericGameId);
-      console.log('Value:', valueInWei.toString(), 'XRT');
+      console.log('Value:', valueInWei.toString(), 'RON');
 
       // Manually encode the function call (Keplr strips it otherwise)
       const data = contract.interface.encodeFunctionData('purchaseLicense', [numericGameId]);
@@ -280,7 +453,7 @@ export default function LicensePurchaseModal({
           errorMessage = err.message;
         } else if (err.message.includes('insufficient funds')) {
           errorTitle = 'Insufficient balance';
-          errorMessage = 'Not enough XRT to cover the transaction cost and gas fees';
+          errorMessage = 'Not enough RON to cover the transaction cost and gas fees';
         } else {
           errorMessage = err.message;
         }
@@ -321,10 +494,10 @@ export default function LicensePurchaseModal({
             <div className="flex justify-between items-baseline gap-4">
               <span className="text-sm font-medium text-gray-400">Price</span>
               <div className="text-right">
-                <span className="text-4xl font-bold" style={{ color: '#C1FF72' }}>
+                <span className="text-4xl font-bold" style={{ color: '#87CEEB' }}>
                   {price}
                 </span>
-                <span className="text-sm text-gray-400 ml-2">XRT</span>
+                <span className="text-sm text-gray-400 ml-2">RON</span>
               </div>
             </div>
             <p className="text-xs text-gray-500 mt-3">
@@ -336,16 +509,16 @@ export default function LicensePurchaseModal({
             <h4 className="text-sm font-semibold text-white">What you get:</h4>
             <ul className="text-sm space-y-2">
               <li className="flex items-center gap-2 text-gray-300">
-                <Check className="w-4 h-4 flex-shrink-0" style={{ color: '#C1FF72' }} /> Unlimited use of this AR filter
+                <Check className="w-4 h-4 flex-shrink-0" style={{ color: '#87CEEB' }} /> Unlimited use of this AR filter
               </li>
               <li className="flex items-center gap-2 text-gray-300">
-                <Check className="w-4 h-4 flex-shrink-0" style={{ color: '#C1FF72' }} /> Real-time AR effects on camera
+                <Check className="w-4 h-4 flex-shrink-0" style={{ color: '#87CEEB' }} /> Real-time AR effects on camera
               </li>
               <li className="flex items-center gap-2 text-gray-300">
-                <Check className="w-4 h-4 flex-shrink-0" style={{ color: '#C1FF72' }} /> Photo capture with this filter
+                <Check className="w-4 h-4 flex-shrink-0" style={{ color: '#87CEEB' }} /> Photo capture with this filter
               </li>
               <li className="flex items-center gap-2 text-gray-300">
-                <Check className="w-4 h-4 flex-shrink-0" style={{ color: '#C1FF72' }} /> Permanent license (one-time)
+                <Check className="w-4 h-4 flex-shrink-0" style={{ color: '#87CEEB' }} /> Permanent license (one-time)
               </li>
             </ul>
           </div>
@@ -354,7 +527,7 @@ export default function LicensePurchaseModal({
             onClick={handlePurchase}
             disabled={loading}
             className="w-full mt-6 text-black font-semibold"
-            style={{ backgroundColor: '#C1FF72' }}
+            style={{ backgroundColor: '#87CEEB' }}
             size="lg"
             data-testid="button-purchase-license"
           >
@@ -364,7 +537,7 @@ export default function LicensePurchaseModal({
                 Processing...
               </>
             ) : (
-              `Purchase for ${price} XRT`
+              `Purchase for ${price} RON`
             )}
           </Button>
         </div>

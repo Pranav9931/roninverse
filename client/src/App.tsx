@@ -39,7 +39,7 @@ function App() {
       appId={appId}
       config={{
         appearance: {
-          accentColor: "#C1FF72",
+          accentColor: "#87CEEB",
         },
         loginMethods: ["email", "wallet", "google"],
         embeddedWallets: {

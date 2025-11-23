@@ -7,7 +7,7 @@ export const mockGames: Game[] = [
     name: 'UEEAAUUEEAA',
     displayName: 'UEEAAUUEEAA',
     description: 'Immersive AR gaming experience',
-    price: 4540,
+    price: 0.25,
     coverImage: gameCover,
     url: 'https://alivestudios.8thwall.app/neworldeffects/',
     isMobileOnly: false,
