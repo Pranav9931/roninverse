@@ -34,8 +34,8 @@ function GamePlayerContent() {
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-white mb-2">Game Not Found</h1>
-          <Button onClick={() => setLocation('/games')} data-testid="button-back-games">
-            Back to Games
+          <Button onClick={() => setLocation('/')} data-testid="button-back-home">
+            Back to Home
           </Button>
         </div>
       </div>
@@ -53,11 +53,11 @@ function GamePlayerContent() {
             This AR game is designed for mobile devices. Please open this page on your smartphone to play.
           </p>
           <Button 
-            onClick={() => setLocation('/games')} 
-            data-testid="button-back-games"
+            onClick={() => setLocation('/')} 
+            data-testid="button-back-home"
             style={{ backgroundColor: '#C1FF72', color: '#000' }}
           >
-            Back to Games
+            Back to Home
           </Button>
         </div>
       </div>
@@ -94,12 +94,12 @@ function GamePlayerContent() {
               Purchase Game
             </Button>
             <Button
-              onClick={() => setLocation('/games')}
+              onClick={() => setLocation('/')}
               variant="ghost"
               className="w-full text-white"
-              data-testid="button-back-games"
+              data-testid="button-back-home"
             >
-              Back to Games
+              Back to Home
             </Button>
           </div>
         </div>
@@ -142,11 +142,11 @@ function GamePlayerContent() {
       <header className="flex-shrink-0 bg-background/95 backdrop-blur border-b border-gray-800 z-50">
         <div className="flex h-14 items-center justify-between px-4">
           <Button
-            onClick={() => setLocation('/games')}
+            onClick={() => setLocation('/')}
             size="icon"
             variant="ghost"
             className="text-white hover:bg-white/20"
-            data-testid="button-back-games"
+            data-testid="button-back-home"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
