@@ -107,10 +107,10 @@ function LibraryGameItemCard({
           </div>
         </div>
 
-        {/* Bottom Button - Only visible on hover */}
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 pt-2">
+        {/* Bottom Button - Always visible, more prominent on hover */}
+        <div className="pt-2">
           <Button
-            className="w-full font-semibold"
+            className="w-full font-semibold opacity-60 group-hover:opacity-100 transition-opacity duration-200"
             onClick={(e) => {
               e.stopPropagation();
               handlePlay();

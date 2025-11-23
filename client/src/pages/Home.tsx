@@ -53,6 +53,7 @@ function GameItemCard({
 
   return (
     <div 
+      onClick={handleAction}
       className="group cursor-pointer overflow-hidden rounded-lg bg-black border border-gray-800 hover:border-gray-600 transition-all duration-200"
       data-testid={`card-${itemType}-${item.id}`}
     >
@@ -102,10 +103,10 @@ function GameItemCard({
           </div>
         </div>
 
-        {/* Bottom Button - Only visible on hover */}
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 pt-2">
+        {/* Bottom Button - Always visible, more prominent on hover */}
+        <div className="pt-2">
           <Button
-            className="w-full font-semibold"
+            className="w-full font-semibold opacity-60 group-hover:opacity-100 transition-opacity duration-200"
             onClick={(e) => {
               e.stopPropagation();
               handleAction();
