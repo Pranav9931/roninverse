@@ -9,7 +9,6 @@ import Home from "@/pages/Home";
 import CameraView from "@/pages/CameraView";
 import Marketplace from "@/pages/Marketplace";
 import Library from "@/pages/Library";
-import Games from "@/pages/Games";
 import GamePlayer from "@/pages/GamePlayer";
 import NotFound from "@/pages/not-found";
 
@@ -18,7 +17,6 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/library" component={Library} />
-      <Route path="/games" component={Games} />
       <Route path="/game/:gameId" component={GamePlayer} />
       <Route path="/lenses" component={Marketplace} />
       <Route path="/app/:appId" component={Marketplace} />
