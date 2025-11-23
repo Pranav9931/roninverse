@@ -11,170 +11,59 @@ import LicensePurchaseModal from '@/components/LicensePurchaseModal';
 import { Lens } from '@/types/lens';
 import { Game } from '@/types/game';
 
-// Component to handle individual lens card with license checking
-function LensCard({ 
-  lens, 
+// Unified game item card for both lenses and WebXR games
+function GameItemCard({ 
+  item, 
+  itemType,
   onPurchase,
   refreshKey 
 }: { 
-  lens: Lens; 
-  onPurchase: (lensId: string) => void;
+  item: Lens | Game; 
+  itemType: 'lens' | 'game';
+  onPurchase: (itemId: string) => void;
   refreshKey: number;
 }) {
   const [, setLocation] = useLocation();
-  const { hasLicense, loading, refetch } = useLicense(lens.id);
+  const { hasLicense, loading, refetch } = useLicense(item.id);
   
-  // Refetch license status when refreshKey changes
   useEffect(() => {
     if (refreshKey > 0) {
       refetch();
     }
   }, [refreshKey, refetch]);
 
-  const handleClick = () => {
+  const handleAction = () => {
     if (loading) return;
     
     if (hasLicense) {
-      setLocation(`/camera/${lens.id}`);
+      setLocation(itemType === 'lens' ? `/camera/${item.id}` : `/game/${item.id}`);
     } else {
-      onPurchase(lens.id);
+      onPurchase(item.id);
     }
   };
 
-  return (
-    <div 
-      key={lens.id} 
-      className="group cursor-pointer bg-gray-900/50 rounded-2xl overflow-hidden border border-gray-800 hover:border-gray-700 transition-all duration-200 hover:scale-105"
-      data-testid={`card-lens-${lens.id}`}
-      onClick={handleClick}
-    >
-      {/* Image Section */}
-      <div className="relative h-56 overflow-hidden rounded-t-2xl">
-        <img
-          src={lens.coverImage}
-          alt={lens.displayName}
-          className="w-full h-full object-cover"
-        />
-        
-        {/* Hover Overlay with Button */}
-        <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-          <Button
-            className="font-semibold"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClick();
-            }}
-            style={{ backgroundColor: '#C1FF72', color: '#000' }}
-            data-testid={`button-lens-${lens.id}`}
-            disabled={loading}
-          >
-            {loading ? 'Checking...' : hasLicense ? 'Play Game' : 'Purchase'}
-          </Button>
-        </div>
-      </div>
-
-      {/* Content Section */}
-      <div className="p-5 space-y-4">
-        {/* Title */}
-        <h3 
-          className="text-xl font-bold text-white leading-tight" 
-          data-testid={`text-lens-name-${lens.id}`}
-        >
-          {lens.displayName}
-        </h3>
-
-        {/* Game Type with Badge */}
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-400">AR Game</span>
-          <div className="h-8 w-8 rounded-full border-2 flex items-center justify-center" style={{ borderColor: hasLicense ? '#C1FF72' : '#4b5563' }}>
-            {hasLicense ? (
-              <Check className="w-4 h-4" style={{ color: '#C1FF72' }} />
-            ) : (
-              <span className="text-xs font-bold" style={{ color: '#9ca3af' }}>
-                {lens.name.slice(0, 1)}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className="h-px bg-gray-800"></div>
-
-        {/* Price Section */}
-        <div className="space-y-2">
-          <span className="text-xs text-gray-500 uppercase tracking-widest font-semibold block">Price</span>
-          <div className="flex items-center gap-2">
-            {hasLicense && <Check className="w-4 h-4" style={{ color: '#C1FF72' }} />}
-            <span className="text-base font-bold" style={{ color: '#C1FF72' }}>
-              {hasLicense ? 'Owned' : `${lens.price} XRT`}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
+  const typeLabel = itemType === 'lens' ? 'AR Game' : 'WebXR Game';
+  const icon = itemType === 'lens' && 'name' in item ? (
+    <span className="text-xs font-bold" style={{ color: '#9ca3af' }}>
+      {item.name.slice(0, 1)}
+    </span>
+  ) : (
+    <Gamepad2 className="w-4 h-4" style={{ color: '#9ca3af' }} />
   );
-}
-
-// Component to handle individual game card with license checking
-function GameCard({ 
-  game, 
-  onPurchase,
-  refreshKey 
-}: { 
-  game: Game; 
-  onPurchase: (gameId: string) => void;
-  refreshKey: number;
-}) {
-  const [, setLocation] = useLocation();
-  const { hasLicense, loading, refetch } = useLicense(game.id);
-  
-  // Refetch license status when refreshKey changes
-  useEffect(() => {
-    if (refreshKey > 0) {
-      refetch();
-    }
-  }, [refreshKey, refetch]);
-
-  const handleClick = () => {
-    if (loading) return;
-    
-    if (hasLicense) {
-      setLocation(`/game/${game.id}`);
-    } else {
-      onPurchase(game.id);
-    }
-  };
 
   return (
     <div 
-      onClick={handleClick}
       className="group cursor-pointer overflow-hidden rounded-lg bg-black border border-gray-800 hover:border-gray-600 transition-all duration-200"
-      data-testid={`card-game-${game.id}`}
+      data-testid={`card-${itemType}-${item.id}`}
     >
       {/* Image Section */}
       <div className="relative aspect-video overflow-hidden">
         <img 
-          src={game.coverImage} 
-          alt={game.displayName}
+          src={item.coverImage} 
+          alt={item.displayName}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-        
-        {/* Hover overlay */}
-        <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-          <Button
-            className="font-semibold"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClick();
-            }}
-            style={{ backgroundColor: '#C1FF72', color: '#000' }}
-            data-testid={`button-game-${game.id}`}
-            disabled={loading}
-          >
-            {loading ? 'Checking...' : hasLicense ? 'Play Game' : 'Purchase'}
-          </Button>
-        </div>
       </div>
 
       {/* Content Section */}
@@ -182,19 +71,19 @@ function GameCard({
         {/* Title */}
         <h3 
           className="text-xl font-bold text-white leading-tight" 
-          data-testid={`text-game-name-${game.id}`}
+          data-testid={`text-${itemType}-name-${item.id}`}
         >
-          {game.displayName}
+          {item.displayName}
         </h3>
 
         {/* Game Type with Badge */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-400">WebXR Game</span>
+          <span className="text-sm text-gray-400">{typeLabel}</span>
           <div className="h-8 w-8 rounded-full border-2 flex items-center justify-center" style={{ borderColor: hasLicense ? '#C1FF72' : '#4b5563' }}>
             {hasLicense ? (
               <Check className="w-4 h-4" style={{ color: '#C1FF72' }} />
             ) : (
-              <Gamepad2 className="w-4 h-4" style={{ color: '#9ca3af' }} />
+              icon
             )}
           </div>
         </div>
@@ -208,9 +97,25 @@ function GameCard({
           <div className="flex items-center gap-2">
             {hasLicense && <Check className="w-4 h-4" style={{ color: '#C1FF72' }} />}
             <span className="text-base font-bold" style={{ color: '#C1FF72' }}>
-              {hasLicense ? 'Owned' : `${game.price} XRT`}
+              {hasLicense ? 'Owned' : `${item.price} XRT`}
             </span>
           </div>
+        </div>
+
+        {/* Bottom Button - Only visible on hover */}
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 pt-2">
+          <Button
+            className="w-full font-semibold"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAction();
+            }}
+            style={{ backgroundColor: '#C1FF72', color: '#000' }}
+            data-testid={`button-${itemType}-${item.id}`}
+            disabled={loading}
+          >
+            {loading ? 'Checking...' : hasLicense ? 'Play Game' : 'Purchase'}
+          </Button>
         </div>
       </div>
     </div>
@@ -282,10 +187,10 @@ function HomeContent() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
             {mockLenses.map((lens) => (
-              <LensCard key={lens.id} lens={lens} onPurchase={handlePurchase} refreshKey={refreshKey} />
+              <GameItemCard key={lens.id} item={lens} itemType="lens" onPurchase={handlePurchase} refreshKey={refreshKey} />
             ))}
             {mockGames.map((game) => (
-              <GameCard key={game.id} game={game} onPurchase={handlePurchase} refreshKey={refreshKey} />
+              <GameItemCard key={game.id} item={game} itemType="game" onPurchase={handlePurchase} refreshKey={refreshKey} />
             ))}
           </div>
         </section>
