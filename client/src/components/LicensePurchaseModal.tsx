@@ -8,16 +8,25 @@ import { SAGA_CHAIN_CONFIG, GAME_LICENSING_CONFIG } from '@/lib/sagaChain';
 import gameABI from '@/lib/gameABI.json';
 import { Loader2 } from 'lucide-react';
 import { mockLenses } from '@/pages/Marketplace';
+import { mockGames, getGameId } from '@/pages/Games';
 
-// Helper function to convert lens ID to numeric gameId
-// Each lens maps to a unique gameId (1-12) on the smart contract
-// Throws error if lensId is invalid to prevent bypass to gameId 1
-const getLensGameId = (lensId: string): number => {
-  const index = mockLenses.findIndex(lens => lens.id === lensId);
-  if (index === -1) {
-    throw new Error(`Invalid lens ID: ${lensId}. Lens not found in catalog.`);
+// Helper function to convert ID to numeric gameId - MUST MATCH useLicense
+// Lenses: gameId 1-12, Games: gameId 13+
+// Throws error if ID is invalid to prevent bypass
+const getItemGameId = (itemId: string): number => {
+  // Check if it's a lens (lenses are IDs 1-12)
+  const lensIndex = mockLenses.findIndex(lens => lens.id === itemId);
+  if (lensIndex !== -1) {
+    return lensIndex + 1;
   }
-  return index + 1;
+  
+  // Check if it's a game (games start at ID 13)
+  const gameIndex = mockGames.findIndex(game => game.id === itemId);
+  if (gameIndex !== -1) {
+    return getGameId(itemId);
+  }
+  
+  throw new Error(`Invalid item ID: ${itemId}. Item not found in catalog.`);
 };
 
 interface LicensePurchaseModalProps {
@@ -166,11 +175,11 @@ export default function LicensePurchaseModal({
       console.log('💰 Balance in Wei:', balance.toString());
       console.log('💰 Balance in XRT:', balanceInXRT);
 
-      // Convert lensId to numeric gameId (required parameter)
+      // Convert itemId (lens or game) to numeric gameId (required parameter)
       if (!lensId) {
-        throw new Error('Lens ID is required for purchase');
+        throw new Error('Item ID is required for purchase');
       }
-      const numericGameId = getLensGameId(lensId);
+      const numericGameId = getItemGameId(lensId);
       
       console.log('Purchasing license for lensId:', lensId, 'gameId:', numericGameId);
 

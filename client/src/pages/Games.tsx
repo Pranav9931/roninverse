@@ -1,26 +1,50 @@
 import { useLocation } from 'wouter';
-import AuthGuard from '@/components/AuthGuard';
+import { Gamepad2, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePrivy } from '@privy-io/react-auth';
-import { LogOut } from 'lucide-react';
-import { useLicense } from '@/hooks/useLicense';
-import { mockLenses } from '@/pages/Marketplace';
+import AuthGuard from '@/components/AuthGuard';
 import { useState, useEffect } from 'react';
 import LicensePurchaseModal from '@/components/LicensePurchaseModal';
-import { Lens } from '@/types/lens';
+import { Game } from '@/types/game';
+import { useLicense } from '@/hooks/useLicense';
 
-// Component to handle individual lens card with license checking
-function LensCard({ 
-  lens, 
+import gameCover from '@assets/stock_images/futuristic_gaming_ne_ddadd80d.jpg';
+
+// Game ID mapping: Games start from gameId 13 (lenses are 1-12)
+export const mockGames: Game[] = [
+  { 
+    id: 'game-ueeaauueeaa',
+    name: 'UEEAAUUEEAA',
+    displayName: 'UEEAAUUEEAA',
+    coverImage: gameCover,
+    price: 4540,
+    url: 'https://alivestudios.8thwall.app/neworldeffects/',
+    mobileOnly: true,
+    description: 'Immersive AR gaming experience'
+  },
+];
+
+// Helper to get game ID for blockchain (starts at 13)
+export const getGameId = (gameId: string): number => {
+  const index = mockGames.findIndex(game => game.id === gameId);
+  if (index === -1) {
+    throw new Error(`Invalid game ID: ${gameId}. Game not found in catalog.`);
+  }
+  return 13 + index; // Games start at ID 13
+};
+
+// Component to handle individual game card with license checking
+function GameCard({ 
+  game, 
   onPurchase,
   refreshKey 
 }: { 
-  lens: Lens; 
-  onPurchase: (lensId: string) => void;
+  game: Game; 
+  onPurchase: (gameId: string) => void;
   refreshKey: number;
 }) {
   const [, setLocation] = useLocation();
-  const { hasLicense, loading, refetch } = useLicense(lens.id);
+  const { hasLicense, loading, refetch } = useLicense(game.id);
   
   // Refetch license status when refreshKey changes
   useEffect(() => {
@@ -29,45 +53,59 @@ function LensCard({
     }
   }, [refreshKey, refetch]);
 
+  // Check if user is on mobile
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
   const handleClick = () => {
     if (loading) return;
     
+    // For mobile-only games, check device
+    if (game.mobileOnly && !isMobile) {
+      return; // Don't do anything on desktop
+    }
+    
     if (hasLicense) {
-      setLocation(`/camera/${lens.id}`);
+      setLocation(`/game/${game.id}`);
     } else {
-      onPurchase(lens.id);
+      onPurchase(game.id);
     }
   };
 
   return (
     <div 
-      key={lens.id} 
       className="group cursor-pointer bg-gray-900/50 rounded-2xl overflow-hidden border border-gray-800 hover:border-gray-700 transition-all duration-200 hover:scale-105"
-      data-testid={`card-lens-${lens.id}`}
+      data-testid={`card-game-${game.id}`}
       onClick={handleClick}
     >
       {/* Image Section */}
       <div className="relative h-56 overflow-hidden rounded-t-2xl">
         <img
-          src={lens.coverImage}
-          alt={lens.displayName}
+          src={game.coverImage}
+          alt={game.displayName}
           className="w-full h-full object-cover"
         />
         
         {/* Hover Overlay with Button */}
         <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-          <Button
-            className="font-semibold"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClick();
-            }}
-            style={{ backgroundColor: '#C1FF72', color: '#000' }}
-            data-testid={`button-lens-${lens.id}`}
-            disabled={loading}
-          >
-            {loading ? 'Checking...' : hasLicense ? 'Use Filter' : 'Purchase'}
-          </Button>
+          {game.mobileOnly && !isMobile ? (
+            <div className="text-center px-4">
+              <p className="text-white text-sm mb-2">Mobile Only</p>
+              <p className="text-gray-300 text-xs">Open on your phone to play</p>
+            </div>
+          ) : (
+            <Button
+              className="font-semibold"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClick();
+              }}
+              style={{ backgroundColor: '#C1FF72', color: '#000' }}
+              data-testid={`button-game-${game.id}`}
+              disabled={loading}
+            >
+              {loading ? 'Checking...' : hasLicense ? 'Play Game' : 'Purchase'}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -76,17 +114,19 @@ function LensCard({
         {/* Title */}
         <h3 
           className="text-xl font-bold text-white leading-tight" 
-          data-testid={`text-lens-name-${lens.id}`}
+          data-testid={`text-game-name-${game.id}`}
         >
-          {lens.displayName}
+          {game.displayName}
         </h3>
 
-        {/* Filter Type with Badge */}
+        {/* Game Type Badge */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-400">AR Filter</span>
+          <span className="text-sm text-gray-400">
+            {game.mobileOnly ? 'Mobile AR Game' : 'AR Game'}
+          </span>
           <div className="h-8 w-8 rounded-full border-2 border-gray-600 flex items-center justify-center" style={{ borderColor: hasLicense ? '#C1FF72' : '#4b5563' }}>
             <span className="text-xs font-bold" style={{ color: hasLicense ? '#C1FF72' : '#9ca3af' }}>
-              {hasLicense ? '✓' : lens.name.slice(0, 1)}
+              {hasLicense ? '✓' : '🎮'}
             </span>
           </div>
         </div>
@@ -98,7 +138,7 @@ function LensCard({
         <div className="space-y-2">
           <span className="text-xs text-gray-500 uppercase tracking-widest font-semibold block">Price</span>
           <span className="text-base font-bold" style={{ color: '#C1FF72' }}>
-            {hasLicense ? '✓ Owned' : `${lens.price} XRT`}
+            {hasLicense ? '✓ Owned' : `${game.price} XRT`}
           </span>
         </div>
       </div>
@@ -106,21 +146,21 @@ function LensCard({
   );
 }
 
-function HomeContent() {
+function GamesContent() {
   const [, setLocation] = useLocation();
   const { logout } = usePrivy();
-  const [selectedLensForPurchase, setSelectedLensForPurchase] = useState<string | null>(null);
+  const [selectedGameForPurchase, setSelectedGameForPurchase] = useState<string | null>(null);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const handlePurchase = (lensId: string) => {
-    setSelectedLensForPurchase(lensId);
+  const handlePurchase = (gameId: string) => {
+    setSelectedGameForPurchase(gameId);
     setShowPurchaseModal(true);
   };
 
   const handlePurchaseSuccess = () => {
     setShowPurchaseModal(false);
-    setSelectedLensForPurchase(null);
+    setSelectedGameForPurchase(null);
     // Trigger refresh of all license statuses
     setRefreshKey(prev => prev + 1);
   };
@@ -129,27 +169,21 @@ function HomeContent() {
     <div className="min-h-screen bg-background dark">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:bg-background/95 dark:supports-[backdrop-filter]:dark:bg-background/60">
         <div className="flex h-16 items-center justify-between gap-4 px-4">
-          <div className="text-2xl font-bold" style={{ fontFamily: 'Lexlox, sans-serif', color: '#C1FF72' }}>
-            o7.xr
+          <div className="flex items-center gap-2">
+            <Gamepad2 className="w-6 h-6" style={{ color: '#C1FF72' }} />
+            <div className="text-2xl font-bold" style={{ fontFamily: 'Lexlox, sans-serif', color: '#C1FF72' }}>
+              Games
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <Button
-              onClick={() => setLocation('/games')}
+              onClick={() => setLocation('/')}
               variant="ghost"
               className="text-white hover:bg-white/20"
               size="sm"
-              data-testid="button-games"
+              data-testid="button-back-home"
             >
-              Games
-            </Button>
-            <Button
-              onClick={() => setLocation('/library')}
-              variant="ghost"
-              className="text-white hover:bg-white/20"
-              size="sm"
-              data-testid="button-library"
-            >
-              Your Library
+              Back
             </Button>
             <Button
               onClick={logout}
@@ -166,26 +200,26 @@ function HomeContent() {
 
       <main className="container px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 text-white">AR Filters</h1>
+          <h1 className="text-3xl font-bold mb-2 text-white">AR Games</h1>
           <p className="text-muted-foreground">
-            Unlock stunning AR effects with individual purchases
+            Unlock immersive AR gaming experiences with individual purchases
           </p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-          {mockLenses.map((lens) => (
-            <LensCard key={lens.id} lens={lens} onPurchase={handlePurchase} refreshKey={refreshKey} />
+          {mockGames.map((game) => (
+            <GameCard key={game.id} game={game} onPurchase={handlePurchase} refreshKey={refreshKey} />
           ))}
         </div>
       </main>
 
-      {selectedLensForPurchase && (
+      {selectedGameForPurchase && (
         <LicensePurchaseModal
           open={showPurchaseModal}
           onOpenChange={setShowPurchaseModal}
-          lensId={selectedLensForPurchase}
-          price={mockLenses.find(l => l.id === selectedLensForPurchase)?.price || 0}
-          title={mockLenses.find(l => l.id === selectedLensForPurchase)?.displayName || 'AR Filter'}
+          lensId={selectedGameForPurchase}
+          price={mockGames.find(g => g.id === selectedGameForPurchase)?.price || 0}
+          title={mockGames.find(g => g.id === selectedGameForPurchase)?.displayName || 'AR Game'}
           onPurchaseSuccess={handlePurchaseSuccess}
         />
       )}
@@ -193,10 +227,10 @@ function HomeContent() {
   );
 }
 
-export default function Home() {
+export default function Games() {
   return (
     <AuthGuard>
-      <HomeContent />
+      <GamesContent />
     </AuthGuard>
   );
 }

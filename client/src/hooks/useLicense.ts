@@ -4,16 +4,25 @@ import { ethers } from 'ethers';
 import { SAGA_CHAIN_CONFIG, GAME_LICENSING_CONFIG } from '@/lib/sagaChain';
 import gameABI from '@/lib/gameABI.json';
 import { mockLenses } from '@/pages/Marketplace';
+import { mockGames, getGameId } from '@/pages/Games';
 
-// Helper function to convert lens ID to numeric gameId - MUST MATCH LicensePurchaseModal
-// Each lens maps to a unique gameId (1-12) on the smart contract
-// Throws error if lensId is invalid to prevent bypass to gameId 1
-const getLensGameId = (lensId: string): number => {
-  const index = mockLenses.findIndex(lens => lens.id === lensId);
-  if (index === -1) {
-    throw new Error(`Invalid lens ID: ${lensId}. Lens not found in catalog.`);
+// Helper function to convert ID to numeric gameId - MUST MATCH LicensePurchaseModal
+// Lenses: gameId 1-12, Games: gameId 13+
+// Throws error if ID is invalid to prevent bypass
+const getItemGameId = (itemId: string): number => {
+  // Check if it's a lens (lenses are IDs 1-12)
+  const lensIndex = mockLenses.findIndex(lens => lens.id === itemId);
+  if (lensIndex !== -1) {
+    return lensIndex + 1;
   }
-  return index + 1;
+  
+  // Check if it's a game (games start at ID 13)
+  const gameIndex = mockGames.findIndex(game => game.id === itemId);
+  if (gameIndex !== -1) {
+    return getGameId(itemId);
+  }
+  
+  throw new Error(`Invalid item ID: ${itemId}. Item not found in catalog.`);
 };
 
 export function useLicense(lensId: string) {
@@ -45,8 +54,8 @@ export function useLicense(lensId: string) {
         provider
       );
 
-      // Convert lensId to numeric gameId (required parameter)
-      const numericGameId = getLensGameId(lensId);
+      // Convert itemId (lens or game) to numeric gameId (required parameter)
+      const numericGameId = getItemGameId(lensId);
       
       // hasLicense expects (gameId: uint256, user: address)
       const owns = await contract.hasLicense(numericGameId, user.wallet.address);
