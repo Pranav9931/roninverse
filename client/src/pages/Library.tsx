@@ -3,9 +3,9 @@ import { useLocation } from 'wouter';
 import AuthGuard from '@/components/AuthGuard';
 import { Button } from '@/components/ui/button';
 import { usePrivy } from '@privy-io/react-auth';
-import { LogOut, ArrowLeft } from 'lucide-react';
+import { LogOut, ArrowLeft, Check } from 'lucide-react';
 import { useLicense } from '@/hooks/useLicense';
-import { mockLenses } from '@/pages/Marketplace';
+import { mockLenses } from '@/lib/lensData';
 import { Lens } from '@/types/lens';
 
 // Component to check individual lens ownership
@@ -145,10 +145,8 @@ function LibraryContent() {
                   {/* Filter Type with Badge */}
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-400">AR Filter</span>
-                    <div className="h-8 w-8 rounded-full border-2 border-gray-600 flex items-center justify-center" style={{ borderColor: '#C1FF72' }}>
-                      <span className="text-xs font-bold" style={{ color: '#C1FF72' }}>
-                        ✓
-                      </span>
+                    <div className="h-8 w-8 rounded-full border-2 flex items-center justify-center" style={{ borderColor: '#C1FF72' }}>
+                      <Check className="w-4 h-4" style={{ color: '#C1FF72' }} />
                     </div>
                   </div>
 
@@ -158,9 +156,12 @@ function LibraryContent() {
                   {/* Price Section */}
                   <div className="space-y-2">
                     <span className="text-xs text-gray-500 uppercase tracking-widest font-semibold block">Status</span>
-                    <span className="text-base font-bold" style={{ color: '#C1FF72' }}>
-                      ✓ Owned
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4" style={{ color: '#C1FF72' }} />
+                      <span className="text-base font-bold" style={{ color: '#C1FF72' }}>
+                        Owned
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

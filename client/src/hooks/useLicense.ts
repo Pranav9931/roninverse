@@ -3,8 +3,8 @@ import { usePrivy } from '@privy-io/react-auth';
 import { ethers } from 'ethers';
 import { SAGA_CHAIN_CONFIG, GAME_LICENSING_CONFIG } from '@/lib/sagaChain';
 import gameABI from '@/lib/gameABI.json';
-import { mockLenses } from '@/pages/Marketplace';
-import { mockGames, getGameId } from '@/pages/Games';
+import { mockLenses } from '@/lib/lensData';
+import { mockGames, getGameId } from '@/lib/gameData';
 
 // Helper function to convert ID to numeric gameId - MUST MATCH LicensePurchaseModal
 // Lenses: gameId 1-12, Games: gameId 13+

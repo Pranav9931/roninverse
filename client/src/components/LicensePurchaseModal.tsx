@@ -6,8 +6,8 @@ import { useToast } from '@/hooks/use-toast';
 import { ethers } from 'ethers';
 import { SAGA_CHAIN_CONFIG, GAME_LICENSING_CONFIG } from '@/lib/sagaChain';
 import gameABI from '@/lib/gameABI.json';
-import { Loader2 } from 'lucide-react';
-import { mockLenses } from '@/pages/Marketplace';
+import { Loader2, Check } from 'lucide-react';
+import { mockLenses } from '@/lib/lensData';
 import { mockGames, getGameId } from '@/lib/gameData';
 
 // Helper function to convert ID to numeric gameId - MUST MATCH useLicense
@@ -51,7 +51,7 @@ export default function LicensePurchaseModal({
   const [loading, setLoading] = useState(false);
 
   const handlePurchase = async () => {
-    console.log('🚀 Starting purchase flow...');
+    console.log('[START] Starting purchase flow...');
     
     if (!user?.wallet?.address) {
       toast({
@@ -64,14 +64,14 @@ export default function LicensePurchaseModal({
 
     try {
       setLoading(true);
-      console.log('✓ User wallet address:', user.wallet.address);
+      console.log('[OK] User wallet address:', user.wallet.address);
 
       const w = window as any;
       
       if (!w.keplr) {
         throw new Error('Keplr wallet not found. Please install Keplr extension.');
       }
-      console.log('✓ Keplr detected');
+      console.log('[OK] Keplr detected');
 
       // Get the EVM provider from Keplr
       let provider = w.keplr.providers?.eip155;
@@ -82,7 +82,7 @@ export default function LicensePurchaseModal({
       if (!provider) {
         throw new Error('Keplr EVM provider not available. Please upgrade Keplr.');
       }
-      console.log('✓ Keplr EVM provider found');
+      console.log('[OK] Keplr EVM provider found');
 
       toast({
         title: 'Requesting network switch...',
@@ -91,14 +91,14 @@ export default function LicensePurchaseModal({
 
       // Request Keplr to switch to Saga network
       const chainIdHex = `0x${SAGA_CHAIN_CONFIG.networkId.toString(16)}`;
-      console.log('📡 Requesting chain switch to:', chainIdHex, '(', SAGA_CHAIN_CONFIG.networkId, ')');
+      console.log('[NETWORK] Requesting chain switch to:', chainIdHex, '(', SAGA_CHAIN_CONFIG.networkId, ')');
       
       try {
         await provider.request({
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: chainIdHex }],
         });
-        console.log('✓ Network switched successfully');
+        console.log('[OK] Network switched successfully');
       } catch (switchError: any) {
         console.log('Network switch error:', switchError);
         if (switchError.code === 4902) {
@@ -120,7 +120,7 @@ export default function LicensePurchaseModal({
                 },
               ],
             });
-            console.log('✓ Chain added successfully');
+            console.log('[OK] Chain added successfully');
           } catch (addError) {
             console.error('Failed to add chain:', addError);
             throw new Error('Failed to add Saga network to Keplr');
@@ -144,13 +144,13 @@ export default function LicensePurchaseModal({
       if (!signer) {
         throw new Error('Failed to get signer from Keplr');
       }
-      console.log('✓ Signer obtained');
+      console.log('[OK] Signer obtained');
 
       const signerAddress = await signer.getAddress();
       if (!signerAddress) {
         throw new Error('Failed to get address from signer');
       }
-      console.log('✓ Signer address:', signerAddress);
+      console.log('[OK] Signer address:', signerAddress);
 
       if (signerAddress.toLowerCase() !== user.wallet.address.toLowerCase()) {
         throw new Error(`Address mismatch: Keplr=${signerAddress}, Privy=${user.wallet.address}`);
@@ -165,15 +165,15 @@ export default function LicensePurchaseModal({
       if (String(network.chainId) !== String(SAGA_CHAIN_CONFIG.networkId)) {
         throw new Error(`Wrong network: Connected to ${network.chainId}, need ${SAGA_CHAIN_CONFIG.networkId}`);
       }
-      console.log('✓ Network verified');
+      console.log('[OK] Network verified');
 
       // Check wallet balance
       console.log('Checking balance...');
       const balance = await ethersProvider.getBalance(signerAddress);
       const balanceInXRT = ethers.formatEther(balance);
-      console.log('💰 Wallet address:', signerAddress);
-      console.log('💰 Balance in Wei:', balance.toString());
-      console.log('💰 Balance in XRT:', balanceInXRT);
+      console.log('[WALLET] Wallet address:', signerAddress);
+      console.log('[WALLET] Balance in Wei:', balance.toString());
+      console.log('[WALLET] Balance in XRT:', balanceInXRT);
 
       // Convert itemId (lens or game) to numeric gameId (required parameter)
       if (!lensId) {
@@ -336,16 +336,16 @@ export default function LicensePurchaseModal({
             <h4 className="text-sm font-semibold text-white">What you get:</h4>
             <ul className="text-sm space-y-2">
               <li className="flex items-center gap-2 text-gray-300">
-                <span style={{ color: '#C1FF72' }}>✓</span> Unlimited use of this AR filter
+                <Check className="w-4 h-4 flex-shrink-0" style={{ color: '#C1FF72' }} /> Unlimited use of this AR filter
               </li>
               <li className="flex items-center gap-2 text-gray-300">
-                <span style={{ color: '#C1FF72' }}>✓</span> Real-time AR effects on camera
+                <Check className="w-4 h-4 flex-shrink-0" style={{ color: '#C1FF72' }} /> Real-time AR effects on camera
               </li>
               <li className="flex items-center gap-2 text-gray-300">
-                <span style={{ color: '#C1FF72' }}>✓</span> Photo capture with this filter
+                <Check className="w-4 h-4 flex-shrink-0" style={{ color: '#C1FF72' }} /> Photo capture with this filter
               </li>
               <li className="flex items-center gap-2 text-gray-300">
-                <span style={{ color: '#C1FF72' }}>✓</span> Permanent license (one-time)
+                <Check className="w-4 h-4 flex-shrink-0" style={{ color: '#C1FF72' }} /> Permanent license (one-time)
               </li>
             </ul>
           </div>

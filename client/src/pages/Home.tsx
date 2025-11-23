@@ -2,9 +2,9 @@ import { useLocation } from 'wouter';
 import AuthGuard from '@/components/AuthGuard';
 import { Button } from '@/components/ui/button';
 import { usePrivy } from '@privy-io/react-auth';
-import { LogOut } from 'lucide-react';
+import { LogOut, Check } from 'lucide-react';
 import { useLicense } from '@/hooks/useLicense';
-import { mockLenses } from '@/pages/Marketplace';
+import { mockLenses } from '@/lib/lensData';
 import { useState, useEffect } from 'react';
 import LicensePurchaseModal from '@/components/LicensePurchaseModal';
 import { Lens } from '@/types/lens';
@@ -84,10 +84,14 @@ function LensCard({
         {/* Filter Type with Badge */}
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-400">AR Filter</span>
-          <div className="h-8 w-8 rounded-full border-2 border-gray-600 flex items-center justify-center" style={{ borderColor: hasLicense ? '#C1FF72' : '#4b5563' }}>
-            <span className="text-xs font-bold" style={{ color: hasLicense ? '#C1FF72' : '#9ca3af' }}>
-              {hasLicense ? '✓' : lens.name.slice(0, 1)}
-            </span>
+          <div className="h-8 w-8 rounded-full border-2 flex items-center justify-center" style={{ borderColor: hasLicense ? '#C1FF72' : '#4b5563' }}>
+            {hasLicense ? (
+              <Check className="w-4 h-4" style={{ color: '#C1FF72' }} />
+            ) : (
+              <span className="text-xs font-bold" style={{ color: '#9ca3af' }}>
+                {lens.name.slice(0, 1)}
+              </span>
+            )}
           </div>
         </div>
 
@@ -97,9 +101,12 @@ function LensCard({
         {/* Price Section */}
         <div className="space-y-2">
           <span className="text-xs text-gray-500 uppercase tracking-widest font-semibold block">Price</span>
-          <span className="text-base font-bold" style={{ color: '#C1FF72' }}>
-            {hasLicense ? '✓ Owned' : `${lens.price} XRT`}
-          </span>
+          <div className="flex items-center gap-2">
+            {hasLicense && <Check className="w-4 h-4" style={{ color: '#C1FF72' }} />}
+            <span className="text-base font-bold" style={{ color: '#C1FF72' }}>
+              {hasLicense ? 'Owned' : `${lens.price} XRT`}
+            </span>
+          </div>
         </div>
       </div>
     </div>

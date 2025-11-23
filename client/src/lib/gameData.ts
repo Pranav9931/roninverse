@@ -3,7 +3,7 @@ import gameCover from '@assets/stock_images/futuristic_gaming_ne_ddadd80d.jpg';
 
 export const mockGames: Game[] = [
   {
-    id: '13',
+    id: 'game-ueeaauueeaa',
     name: 'UEEAAUUEEAA',
     displayName: 'UEEAAUUEEAA',
     description: 'Immersive AR gaming experience',
@@ -15,9 +15,9 @@ export const mockGames: Game[] = [
 ];
 
 export const getGameId = (gameId: string): number => {
-  const game = mockGames.find(g => g.id === gameId);
-  if (!game) {
-    throw new Error(`Invalid game ID: ${gameId}`);
+  const index = mockGames.findIndex(g => g.id === gameId);
+  if (index === -1) {
+    throw new Error(`Invalid game ID: ${gameId}. Game not found in catalog.`);
   }
-  return parseInt(game.id, 10);
+  return 13 + index; // Games start at ID 13
 };
