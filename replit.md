@@ -140,6 +140,20 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### November 23, 2025 - Games Category Integration (PRODUCTION-READY)
+- **New Games Category**: Added dedicated Games marketplace page for WebXR/AR games starting at gameId 13
+- **First Game Launch**: "UEEAAUUEEAA" deployed as game 13 at 4540 XRT price (https://alivestudios.8thwall.app/neworldeffects/)
+- **Mobile-Optimized Player**: Created GamePlayer page with full-screen iframe for mobile-only games
+- **Centralized Data Architecture**: Created lib/gameData.ts and lib/lensData.ts to eliminate circular import issues
+- **Type System**: Introduced Game type with isMobileOnly flag for platform-specific content
+- **ID Mapping**: Implemented slug-based IDs (e.g., 'game-ueeaauueeaa') with getGameId helper mapping to blockchain gameIds
+- **Emoji Compliance**: Removed all emoji from codebase (UI and console logs), replaced with Lucide Check icons and text markers
+- **License System Integration**: Extended useLicense hook and LicensePurchaseModal to support both lenses (gameId 1-12) and games (gameId 13+)
+- **Navigation**: Added Games link to Home page header with responsive design
+- **Routing**: Added /games and /game/:gameId routes to App.tsx
+- **React Compliance**: Fixed all hooks violations by breaking circular dependencies between components
+- **Production Status**: Architect-approved with no blocking defects, ready for deployment
+
 ### November 22, 2025 - Saga Blockchain Integration & Per-Lens Licensing (PRODUCTION-READY)
 - **CRITICAL FIX**: Updated Saga chain configuration from incorrect chainId 2763779114927000 to correct chainId 2763783314764000
 - Fixed RPC URL to point to correct Saga Chainlet where GameLicensing contract is deployed

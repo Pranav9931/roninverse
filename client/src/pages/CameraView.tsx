@@ -8,7 +8,7 @@ import PhotoPreview from '@/components/PhotoPreview';
 import AuthGuard from '@/components/AuthGuard';
 import LicensePurchaseModal from '@/components/LicensePurchaseModal';
 import { useLicense } from '@/hooks/useLicense';
-import { mockLenses } from '@/pages/Marketplace';
+import { mockLenses } from '@/lib/lensData';
 import { Loader2, LogOut, SwitchCamera, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
