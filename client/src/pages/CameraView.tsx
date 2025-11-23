@@ -23,7 +23,7 @@ function CameraViewContent() {
   const [showLicenseModal, setShowLicenseModal] = useState(false);
   const { logout } = usePrivy();
   const { toast } = useToast();
-  const { hasLicense, loading: licenseLoading, refetch } = useLicense(lensId);
+  const { hasLicense, loading: licenseLoading, refetch } = useLicense(lensId || '');
 
   const {
     status,
