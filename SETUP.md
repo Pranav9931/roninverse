@@ -1,8 +1,8 @@
-# NeoSaga Setup Guide
+# RoninVerse Setup Guide
 
 ## Snap Camera Kit Configuration
 
-To enable AR lenses in NeoSaga, you need to configure your Snap Camera Kit credentials.
+To enable AR lenses in RoninVerse, you need to configure your Snap Camera Kit credentials.
 
 ### Prerequisites
 

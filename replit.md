@@ -1,8 +1,8 @@
-# NeoSaga - AR Camera Experience
+# RoninVerse - AR Marketplace
 
 ## Overview
 
-NeoSaga is a social camera application that integrates Snap Camera Kit to provide AR lens experiences. The application allows users to capture photos with AR filters, similar to popular social media camera features. Built with React and Express, it features a camera-first mobile interface with real-time lens preview, free AR lens selection, and user authentication via Privy.
+RoninVerse is a blockchain-powered AR lens and game marketplace built on the Ronin Saigon testnet. The application integrates Snap Camera Kit for AR lens experiences and supports WebXR games, all purchasable with RON tokens. Built with React and Express, it features a marketplace interface with real-time AR preview, multi-wallet support (Ronin Wallet, MetaMask, Keplr), and user authentication via Privy.
 
 ## User Preferences
 
@@ -83,20 +83,20 @@ Preferred communication style: Simple, everyday language.
 - Bootstrap initialization pattern for Camera Kit SDK
 - Real-time canvas rendering for AR effects
 
-**Saga Blockchain Integration (GameLicensing Contract)**
-- Chain: Saga Chainlet (OpenXR)
-- Chain ID: 2763783314764000
-- RPC URL: https://openxr-2763783314764000-1.jsonrpc.sagarpc.io
-- Block Explorer: https://openxr-2763783314764000-1.sagaexplorer.io
-- Contract Address: 0x91C7B6f8905060D6aE711878020DB15E90C697E0
-- Native Token: XRT (18 decimals)
-- License Price: 2324 XRT per lens
+**Ronin Saigon Blockchain Integration (GameLicensing Contract)**
+- Chain: Ronin Saigon Testnet
+- Chain ID: 2021 (0x7e5)
+- RPC URL: https://saigon-testnet.roninchain.com/rpc
+- Block Explorer: https://saigon-app.roninchain.com
+- Contract Address: 0xe29Eb65EE3Dda606E9f2e0aD6D2D4f73AEF83846
+- Native Token: RON (18 decimals)
+- License Price: 0.1-0.3 RON per item
 - Each AR lens maps to a unique gameId (1-12) on the smart contract
-- Users must purchase each lens separately (individual licenses)
-- Total cost for all lenses: 27,888 XRT (12 lenses × 2324 XRT)
-- Wallet Integration: Keplr wallet for EVM transactions on Saga chain
-- Transaction Flow: User selects lens → Purchases license for that gameId → Smart contract verifies payment → Lens unlocked
-- Deployment: Contract owner must list games 2-12 using the deployment script in `scripts/deploy-games.js` (see DEPLOYMENT_INSTRUCTIONS.md)
+- WebXR games start at gameId 13+
+- Users must purchase each item separately (individual licenses)
+- Wallet Integration: Ronin Wallet, MetaMask, Keplr for EVM transactions
+- Transaction Flow: User selects item → Purchases license for that gameId → Smart contract verifies payment → Item unlocked
+- Deployment: Contract owner lists all items using `deployGames.ts`
 
 **Privy Authentication Service**
 - App ID: `cmhdsknrh003zjp0chko9z886` (stored in VITE_PRIVY_APP_ID)
@@ -140,56 +140,20 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### November 23, 2025 - Games Category Integration (PRODUCTION-READY)
-- **New Games Category**: Added dedicated Games marketplace page for WebXR/AR games starting at gameId 13
-- **First Game Launch**: "UEEAAUUEEAA" deployed as game 13 at 4540 XRT price (https://alivestudios.8thwall.app/neworldeffects/)
-- **Mobile-Optimized Player**: Created GamePlayer page with full-screen iframe for mobile-only games
-- **Centralized Data Architecture**: Created lib/gameData.ts and lib/lensData.ts to eliminate circular import issues
-- **Type System**: Introduced Game type with isMobileOnly flag for platform-specific content
-- **ID Mapping**: Implemented slug-based IDs (e.g., 'game-ueeaauueeaa') with getGameId helper mapping to blockchain gameIds
-- **Emoji Compliance**: Removed all emoji from codebase (UI and console logs), replaced with Lucide Check icons and text markers
-- **License System Integration**: Extended useLicense hook and LicensePurchaseModal to support both lenses (gameId 1-12) and games (gameId 13+)
-- **Navigation**: Added Games link to Home page header with responsive design
-- **Routing**: Added /games and /game/:gameId routes to App.tsx
-- **React Compliance**: Fixed all hooks violations by breaking circular dependencies between components
-- **Production Status**: Architect-approved with no blocking defects, ready for deployment
+### February 2026 - Ronin Saigon Migration & RoninVerse Rebrand
+- **Full Rebrand**: Renamed from "NeoSaga" to "RoninVerse" across all UI, documentation, and configuration
+- **Blockchain Migration**: Migrated from Saga Chainlet to Ronin Saigon Testnet (Chain ID: 2021)
+- **Contract**: GameLicensing at 0xe29Eb65EE3Dda606E9f2e0aD6D2D4f73AEF83846
+- **RON Pricing**: All items priced 0.1-0.3 RON (12 AR lenses + 1 WebXR game)
+- **Multi-Wallet**: Ronin Wallet, MetaMask, Keplr support
+- **Sky Blue Theme**: UI accent color #87CEEB applied throughout
+- **On-chain Deployment**: All 13 catalog items deployed via deployGames.ts
+- **Documentation**: Updated README.md, SETUP.md, DEPLOYMENT_INSTRUCTIONS.md with Ronin Saigon details
 
-### November 22, 2025 - Saga Blockchain Integration & Per-Lens Licensing (PRODUCTION-READY)
-- **CRITICAL FIX**: Updated Saga chain configuration from incorrect chainId 2763779114927000 to correct chainId 2763783314764000
-- Fixed RPC URL to point to correct Saga Chainlet where GameLicensing contract is deployed
-- **Per-Lens Licensing System**: Each lens (01-12) maps to unique gameId (1-12) on smart contract
-- **Security**: Made lensId REQUIRED in useLicense and LicensePurchaseModal (no default fallback)
-- **Security**: getLensGameId throws error for invalid lensId (prevents bypass to gameId 1)
-- Each AR lens requires separate purchase (2324 XRT per lens, 27,888 XRT for all 12)
-- Created deployment script (`scripts/deploy-games.js`) for contract owner to list games 2-12
-- Provided comprehensive deployment instructions in DEPLOYMENT_INSTRUCTIONS.md
-- **React Compliance**: Fixed all React hooks violations in Home.tsx and Library.tsx
-  - Home.tsx: Created LensCard component for proper hooks usage
-  - Library.tsx: Created LensOwnershipChecker component with useEffect for state updates
-- Added comprehensive balance checking and transaction logging for debugging
-- Implemented proper error handling for insufficient balance and transaction failures
-- Fixed deployment script to prevent private key leakage in error logs
-- Added detailed console logging for transaction debugging (balance, gas costs, total costs)
-- Updated contract integration to use correct blockchain explorer and RPC endpoints
-- **Production Status**: All architect reviews passed, no security vulnerabilities, React Rules of Hooks compliant
-
-### November 22, 2025 - Netflix-Style UI Redesign & Responsive Design
-- Redesigned lens selection page with Netflix-style horizontal cards (16:9 aspect ratio)
-- Added 12 abstract art and neon holographic cover images for AR lens cards
-- Created unified Lens type in `@/types/lens.ts` with displayName and coverImage fields
-- Updated lens naming: formatted as "Lens 01" through "Lens 12" with funky names like "Cosmic Vibes", "Rainbow Blast", "Pixel Paradise", "Electric Dreams"
-- Implemented bottom-to-top gradient overlay (from-black/90 via-black/40 to-transparent) over sharp cover images for Netflix-style appearance
-- Enhanced text hierarchy with prominent badges, bold display names, and drop shadows
-- Made lens selection completely free and instant (no payment flow)
-- Removed Fluent testnet and x402 payment infrastructure
-- Cleaned up wallet dialog to remove payment-related UI
-- Added logout button to both Marketplace and CameraView pages
-
-**Responsive Design Implementation:**
-- Marketplace page: Fully responsive grid layout (1 col mobile, 2 cols sm, 3 cols lg, 4 cols xl)
-- Marketplace page: Max-width constraint (max-w-7xl) centers content on desktop monitors
-- Marketplace page: Responsive text sizes, icon sizes, spacing, and header height across breakpoints
-- CameraView page: Constrained camera view on desktop (max-w-2xl, centered with rounded corners)
-- CameraView page: Full-screen camera on mobile, 90vh with subtle rounding on desktop
-- CameraView page: Responsive button sizing, icon sizing, and status text visibility (hidden on mobile)
-- All components adapt smoothly between mobile and desktop form factors
+### November 2025 - Games Category & AR Marketplace
+- Added WebXR games marketplace alongside AR lenses
+- First game: "UEEAAUUEEAA" (game 13) at 0.25 RON
+- Mobile-optimized GamePlayer with full-screen iframe
+- Centralized data in lib/gameData.ts and lib/lensData.ts
+- Netflix-style UI with horizontal cards and gradient overlays
+- Responsive design across mobile, tablet, and desktop
